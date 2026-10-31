@@ -1,0 +1,24 @@
+export const questionVersion = 'unigate-riasec-v1';
+export const questionNotice = '60 câu tiếng Việt do UniGate biên soạn theo mô hình sở thích nghề nghiệp Holland/RIASEC. Đây không phải bộ câu hỏi O*NET chính thức hay thang đo đã được chuẩn hóa tại Việt Nam. Kết quả dùng để khám phá hướng nghiệp, không đánh giá năng lực hoặc xác suất trúng tuyển.';
+const bank = {
+  R: [
+    'Tôi muốn tự lắp ráp một chiếc kệ theo bản vẽ.', 'Tôi thấy hứng thú khi sửa một đồ dùng đang bị hỏng.', 'Tôi muốn học cách sử dụng dụng cụ trong một xưởng thực hành.', 'Tôi thích chăm sóc cây và theo dõi sự phát triển của chúng.', 'Tôi muốn tham gia chế tạo một mô hình robot có thể chuyển động.', 'Tôi thích những hoạt động cần thao tác trực tiếp hơn là chỉ đọc hướng dẫn.', 'Tôi muốn tìm hiểu cách vận hành một thiết bị sản xuất.', 'Tôi hứng thú với việc khảo sát địa hình ngoài thực tế.', 'Tôi muốn lắp đặt một mạch điện đơn giản và kiểm tra nó.', 'Tôi thích tạo ra một sản phẩm có thể cầm, sử dụng hoặc thử nghiệm.',
+  ],
+  I: [
+    'Tôi muốn tìm nguyên nhân khi một thí nghiệm cho kết quả khác dự đoán.', 'Tôi thích giải một bài toán có nhiều cách tiếp cận.', 'Tôi muốn phân tích một bộ dữ liệu để tìm ra quy luật.', 'Tôi thích đọc về các phát hiện khoa học và đặt câu hỏi tiếp theo.', 'Tôi hứng thú với việc viết chương trình giải quyết một vấn đề.', 'Tôi muốn kiểm tra chứng cứ trước khi chấp nhận một kết luận.', 'Tôi muốn tìm hiểu cơ chế hoạt động của cơ thể người.', 'Tôi thích so sánh các giả thuyết để giải thích một hiện tượng.', 'Tôi muốn thiết kế một khảo sát và phân tích câu trả lời.', 'Tôi thấy hấp dẫn khi tìm hiểu một chủ đề khó chưa có đáp án rõ ràng.',
+  ],
+  A: [
+    'Tôi muốn viết một câu chuyện theo ý tưởng riêng.', 'Tôi thích thiết kế hình ảnh cho một sự kiện của lớp.', 'Tôi muốn thử sáng tác một giai điệu hoặc lời bài hát.', 'Tôi hứng thú với việc chụp ảnh để kể một câu chuyện.', 'Tôi thích tìm nhiều cách trình bày khác nhau cho cùng một ý tưởng.', 'Tôi muốn dựng một video với phong cách riêng.', 'Tôi thích vẽ hoặc phác thảo ngay cả khi không có mẫu sẵn.', 'Tôi muốn tham gia diễn xuất trong một vở kịch ngắn.', 'Tôi hứng thú với việc thiết kế không gian hoặc vật dụng đẹp mắt.', 'Tôi muốn thể hiện cảm xúc của mình qua một sản phẩm sáng tạo.',
+  ],
+  S: [
+    'Tôi thích giải thích bài học để một người bạn hiểu rõ hơn.', 'Tôi muốn tham gia hoạt động hỗ trợ người gặp khó khăn.', 'Tôi sẵn lòng lắng nghe khi người khác muốn chia sẻ câu chuyện.', 'Tôi hứng thú với việc hướng dẫn một nhóm em nhỏ học kỹ năng mới.', 'Tôi muốn tìm cách giúp mọi thành viên cảm thấy được đón nhận.', 'Tôi thích công việc có sự trao đổi và hỗ trợ trực tiếp giữa người với người.', 'Tôi muốn tham gia một chương trình nâng cao sức khỏe cộng đồng.', 'Tôi thấy có ý nghĩa khi giúp người khác tìm ra hướng giải quyết vấn đề.', 'Tôi muốn hòa giải khi các thành viên trong nhóm có bất đồng.', 'Tôi thích đồng hành và theo dõi sự tiến bộ của người mình hướng dẫn.',
+  ],
+  E: [
+    'Tôi muốn đề xuất một ý tưởng và thuyết phục nhóm cùng thực hiện.', 'Tôi thích lập kế hoạch cho một gian hàng gây quỹ.', 'Tôi muốn thử điều phối công việc trong một dự án của lớp.', 'Tôi hứng thú với việc giới thiệu một sản phẩm tới khách hàng.', 'Tôi muốn tìm hiểu cách một doanh nghiệp phát triển.', 'Tôi thích thương lượng để các bên đạt được thỏa thuận.', 'Tôi muốn đặt mục tiêu và dẫn dắt nhóm vượt qua thử thách.', 'Tôi thấy hấp dẫn khi tìm kiếm cơ hội cho một ý tưởng mới.', 'Tôi muốn trình bày kế hoạch của mình trước những người ra quyết định.', 'Tôi thích chủ động kết nối mọi người để cùng tạo ra một hoạt động.',
+  ],
+  C: [
+    'Tôi thích sắp xếp tài liệu để có thể tìm lại nhanh chóng.', 'Tôi muốn theo dõi thu chi của một hoạt động bằng bảng tính.', 'Tôi thấy hứng thú khi kiểm tra và phát hiện sai lệch trong số liệu.', 'Tôi thích lập danh sách việc cần làm và theo dõi tiến độ.', 'Tôi muốn tổ chức dữ liệu theo một cấu trúc nhất quán.', 'Tôi thích những nhiệm vụ có yêu cầu và quy trình rõ ràng.', 'Tôi muốn kiểm tra hồ sơ để bảo đảm thông tin đầy đủ.', 'Tôi hứng thú với việc cải thiện cách lưu trữ và quản lý thông tin.', 'Tôi thích lập lịch để các công việc không bị trùng hoặc bỏ sót.', 'Tôi muốn đối chiếu kết quả với tiêu chí trước khi hoàn thành công việc.',
+  ],
+};
+// Interleave groups so the questionnaire does not prime the user with group labels.
+export const questions = Array.from({ length: 10 }, (_, i) => Object.entries(bank).map(([group, items], j) => ({ id: i * 6 + j + 1, group, content: items[i] }))).flat();

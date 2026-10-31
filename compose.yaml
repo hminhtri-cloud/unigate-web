@@ -1,0 +1,20 @@
+services:
+  db:
+    image: mysql:8.4
+    ports:
+      - "127.0.0.1:${MYSQL_PORT:-3310}:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-unigate}
+      MYSQL_USER: ${MYSQL_USER:-unigate}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Run npm run setup first}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Run npm run setup first}
+    volumes:
+      - unigate_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysql -u$$MYSQL_USER -h127.0.0.1 -e 'SELECT 1' $$MYSQL_DATABASE"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    restart: unless-stopped
+volumes:
+  unigate_mysql:

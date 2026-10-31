@@ -1,0 +1,26 @@
+import React,{useEffect,useState} from 'react';
+import { Bookmark,BookOpen,CheckCircle2,Compass,Database,GitCompareArrows,GraduationCap,LayoutDashboard,LogOut,Menu,PanelLeftClose,Settings,UserRound,ChartNoAxesCombined,X,AlertCircle } from 'lucide-react';
+import { useApp } from './context';
+import { Brand,Button,Empty,Link } from './components';
+import Auth from './Auth';
+import Dashboard from './Dashboard';
+import Holland from './Holland';
+import Results from './Results';
+import Explore,{Universities,Sources} from './Explore';
+import {Compare,Wishes} from './Planning';
+import {Profile,Scores} from './Account';
+const nav=[['','Tổng quan',LayoutDashboard],['holland','Khám phá bản thân',Compass],['results','Kết quả Holland',ChartNoAxesCombined],['explore','Ngành & Trường',BookOpen],['universities','Trường đại học',GraduationCap],['wishes','Nguyện vọng',Bookmark],['compare','So sánh lựa chọn',GitCompareArrows],['scores','Điểm học tập',UserRound]];
+function useRoute(){const [hash,setHash]=useState(window.location.hash);useEffect(()=>{const change=()=>{setHash(window.location.hash);window.scrollTo(0,0);};window.addEventListener('hashchange',change);return()=>window.removeEventListener('hashchange',change);},[]);const [path,query]=hash.replace(/^#\/?/,'').split('?');return {path:path||'',params:new URLSearchParams(query),hash};}
+export default function App(){
+  const app=useApp(),{path,params,hash}=useRoute(),[mobile,setMobile]=useState(false),[loggingOut,setLoggingOut]=useState(false);
+  useEffect(()=>{setMobile(false);document.title=`${nav.find(([key])=>key===path)?.[1]||'UniGate'} · UniGate`;},[path]);
+  if(!app.ready)return <div className="startup"><Brand/><div className="loader"/><p>Đang mở cánh cửa tương lai…</p></div>;
+  if(app.error)return <div className="startup"><Brand/><h2>Chưa thể kết nối UniGate</h2><p role="alert">{app.error}</p><Button className="primary" onClick={app.initialize}>Kết nối lại</Button></div>;
+  if(!app.user)return <><Auth/>{app.toast&&<div className={`toast ${app.toast.type}`} role="status">{app.toast.message}</div>}</>;
+  const routes={'':<Dashboard/>,holland:<Holland/>,results:<Results/>,explore:<Explore key={hash} params={params}/>,universities:<Universities/>,wishes:<Wishes/>,compare:<Compare/>,scores:<Scores/>,profile:<Profile/>,sources:<Sources/>};
+  return <div className="app-shell"><a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus();}}>Bỏ qua điều hướng</a>{mobile&&<button className="sidebar-backdrop" aria-label="Đóng menu" onClick={()=>setMobile(false)}/>}
+    <aside className={`sidebar ${mobile?'open':''}`}><div className="sidebar-brand"><Brand/><button className="icon-button mobile-only" aria-label="Đóng menu" onClick={()=>setMobile(false)}><PanelLeftClose/></button></div><span className="nav-label">KHÁM PHÁ TƯƠNG LAI</span><nav aria-label="Điều hướng chính">{nav.map(([key,label,Icon])=><Link key={key} to={key} onClick={()=>setMobile(false)} aria-current={path===key?'page':undefined} className={path===key?'active':''}><Icon size={19}/><span>{label}</span>{key==='wishes'&&app.wishes.length>0&&<small>{app.wishes.length}</small>}{key==='compare'&&app.compare.length>0&&<small>{app.compare.length}</small>}</Link>)}</nav><div className="sidebar-bottom"><div className="sidebar-tip"><span>✦</span><strong>Mỗi lựa chọn đều bắt đầu<br/>từ việc hiểu chính mình.</strong><Link to="sources" onClick={()=>setMobile(false)}>Tìm hiểu dữ liệu <span>↗</span></Link></div><Link to="sources" onClick={()=>setMobile(false)} className={path==='sources'?'active':''}><Database size={18}/> Nguồn dữ liệu</Link><Link to="profile" onClick={()=>setMobile(false)} className={path==='profile'?'active':''}><Settings size={18}/> Tài khoản</Link></div><small className="sidebar-version">UniGate · Student Edition</small></aside>
+    <div className="workspace"><header className="topbar"><div><button className="icon-button mobile-only" aria-label="Mở menu" onClick={()=>setMobile(true)}><Menu/></button><span>Không gian học sinh <span className="breadcrumb">/ {nav.find(([key])=>key===path)?.[1]|| (path==='profile'?'Tài khoản':'Nguồn dữ liệu')}</span></span></div><div className="topbar-actions"><span className="local-status"><i/> MySQL · Local</span><Link to="profile" className="user-chip"><span className="avatar">{app.user.name.trim()[0].toUpperCase()}</span><span>{app.user.name}<small>Học sinh {app.user.grade==='other'?'':`· Lớp ${app.user.grade}`}</small></span></Link><button className="icon-button" disabled={loggingOut} aria-label="Đăng xuất" onClick={async()=>{setLoggingOut(true);try{await app.logout();}catch(e){app.notify(e.message,'error');}finally{setLoggingOut(false);}}}><LogOut size={18}/></button></div></header>
+    <main id="main-content" tabIndex={-1}>{routes[path]||<Empty title="Trang này chưa tồn tại" action={<Link className="button primary" to="">Về tổng quan</Link>}>Chọn một mục trong menu để tiếp tục.</Empty>}</main><footer className="footer"><span>UniGate — Mở lối tương lai</span><Link to="sources">Dữ liệu có nguồn · Khám phá có cơ sở</Link></footer></div>
+    {app.toast&&<div className={`toast ${app.toast.type}`} key={app.toast.id} role="status">{app.toast.type==='error'?<AlertCircle size={19}/>:<CheckCircle2 size={19}/>} {app.toast.message}</div>}</div>;
+}
