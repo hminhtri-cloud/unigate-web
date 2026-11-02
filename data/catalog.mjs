@@ -2,7 +2,10 @@ import { fields } from '../shared/domain.mjs';
 import { addAdmissionScores } from './admissions.mjs';
 import {ctuPrograms,ctuProgramUrl} from './ctu.mjs';
 import {addVerifiedTuition} from './tuition.mjs';
-export const checkedAt = '2026-10-31';
+import {publicHcmUniversities,publicHcmMajors} from './public-hcm.mjs';
+import {southernUniversities,southernMajors} from './south.mjs';
+import {moreSouthernUniversities,moreSouthernMajors} from './more-south.mjs';
+export const checkedAt = '2026-11-01';
 const source = (url, title, kind='official') => ({ url,title,kind,checkedAt });
 const sources = {
   UIT: source('https://tuyensinh.uit.edu.vn/nganh-dao-tao','UIT — Ngành đào tạo'),
@@ -48,6 +51,9 @@ const additionalUniversities = [
   ['HUTECH','Trường Đại học Công nghệ Thành phố Hồ Chí Minh','DKC','https://www.hutech.edu.vn/','Đào tạo đa lĩnh vực: kỹ thuật, kinh doanh, truyền thông và dịch vụ.','Chọn lọc ngành từ thông tin chính quy năm 2026; không lấy các ngành dự kiến mở hoặc thông tin năm 2027.'],
 ].map(([id,name,code,website,description,coverage]) => ({ id,name,code,province:'TP. Hồ Chí Minh',website,description,coverage,source:sources[id],system:'Trường tại TP.HCM',institutionType:id==='HUTECH'?'private':'public',region:'Miền Nam' }));
 universities.push(...additionalUniversities);
+universities.push(...publicHcmUniversities);
+universities.push(...southernUniversities);
+universities.push(...moreSouthernUniversities);
 universities.push({id:'CTU',name:'Đại học Cần Thơ',code:'TCT',province:'TP. Cần Thơ',website:'https://www.ctu.edu.vn/',description:'Đào tạo đa lĩnh vực tại Đồng bằng sông Cửu Long, từ sư phạm đến công nghệ và nông nghiệp.',coverage:'Đã nhập 127/127 mã xét tuyển 2026, điểm chuẩn từng mã và học phí bình quân/năm từ công bố chính thức; mã H/S học tại cơ sở ngoài TP. Cần Thơ theo thông báo.',source:{url:ctuProgramUrl,title:'ĐH Cần Thơ — danh mục 127 mã xét tuyển 2026',kind:'official',checkedAt:'2026-10-31'},system:'Trường tại Cần Thơ',institutionType:'public',region:'Miền Nam'});
 
 const all = [];
@@ -349,7 +355,7 @@ add('NLU',`
 |Công nghệ sinh học|bio
 |Công nghệ thực phẩm|bio
 |Nông học|bio
-|Lâm nghiệp|bio
+ |Lâm học|bio
 |Nuôi trồng thủy sản|bio
 |Quản lý tài nguyên và môi trường|environment
 |Cơ khí công nghệ|engineering
@@ -402,6 +408,9 @@ add('HUTECH',`
 // Store the original subject expression for HCMUT rather than fabricating combination codes.
 for (const major of all.filter(m=>m.universityId==='HCMUT')) major.admissionsNote = 'Tổ hợp và điều kiện chi tiết xem bảng gốc. Điểm tổng hợp thang 100; không quy đổi từ tổng 3 môn THPT bằng phép nhân đơn giản.';
 all.push(...ctuPrograms);
+all.push(...publicHcmMajors);
+all.push(...southernMajors);
+all.push(...moreSouthernMajors);
 addAdmissionScores(all);
 addVerifiedTuition(all);
 export const majors = all;

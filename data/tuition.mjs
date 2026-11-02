@@ -6,6 +6,15 @@ const ufmSource='https://login.ufm.edu.vn/Resources/Docs/SubDomain/tuyensinh/202
 const uahSource='https://uah.edu.vn/media/6/1002-qd-ve-muc-thu-hoc-phi-dai-hoc-he-cq-nam-hoc-2026-2027-cua-khoa-2026_0001.pdf';
 const hcmutSource='https://hcmut.edu.vn/tuyen-sinh/dai-hoc-chinh-quy/chuong-trinh-dao-tao';
 const uitSource='https://tuyensinh.uit.edu.vn/hoc-phi-hoc-bong';
+const ouSource='https://tuyensinh.ou.edu.vn/hoc-phi-du-kien-khoa-2025';
+const umpSource='https://ump.edu.vn/uploads/ckeditor/files/Truong/DaoTaoDaiHoc/TuyenSinh/2026/1608_06042026_Thongtintuyensinh2026.pdf';
+const sguSource='https://tuyensinh.sgu.edu.vn/images/files/2026/MPhuLuc6_Hocphi.pdf';
+const sguWholeCourse={
+  'Quản lý giáo dục':102_102_000,'Quản trị kinh doanh':132_732_600,'Quản trị văn phòng':132_732_600,'Kế toán':132_732_600,'Tài chính – Ngân hàng':132_732_600,'Luật':132_732_600,'Kinh doanh quốc tế':132_732_600,'Kiểm toán':132_732_600,
+  'Khoa học môi trường':142_942_800,'Công nghệ thông tin':165_489_940,'Kỹ thuật phần mềm':165_489_940,'Công nghệ kỹ thuật môi trường':165_489_940,'Công nghệ kỹ thuật điện, điện tử':165_489_940,'Trí tuệ nhân tạo':142_942_800,'Khoa học dữ liệu':142_942_800,'Toán ứng dụng':127_627_500,'Tâm lý học':127_627_500,'Việt Nam học':127_627_500,'Quốc tế học':127_627_500,'Thông tin – Thư viện':122_522_400,'Du lịch':132_732_600,'Ngôn ngữ Anh':142_942_800,'Địa lý học':86_786_700,'Lịch sử':86_786_700,
+};
+const ouFees={'Công nghệ sinh học':31_000_000,'Công nghệ thông tin':32_000_000,'Kế toán':30_000_000,'Kiểm toán':30_000_000,'Tài chính – Ngân hàng':30_000_000,'Quản trị kinh doanh':30_000_000,'Luật':30_000_000,'Xã hội học':26_500_000,'Ngôn ngữ Anh':32_000_000};
+const umpFees={'Y khoa':88_000_000,'Y học cổ truyền':55_000_000,'Y học dự phòng':55_000_000,'Dược học':63_500_000,'Răng – Hàm – Mặt':90_000_000,'Điều dưỡng':48_000_000,'Kỹ thuật xét nghiệm y học':48_000_000,'Kỹ thuật hình ảnh y học':48_000_000};
 const uahRates={'Kiến trúc':1_140_000,'Quy hoạch vùng và đô thị':1_120_000,'Thiết kế nội thất':1_180_000,'Thiết kế đồ họa':950_000,'Thiết kế thời trang':950_000,'Kỹ thuật xây dựng':1_140_000,'Quản lý xây dựng':1_140_000};
 const usshFees={
   16_652_000:new Set(['Triết học','Tôn giáo học','Lịch sử','Địa lý học','Thông tin – Thư viện','Lưu trữ học','Ngôn ngữ Nga','Ngôn ngữ Italia','Ngôn ngữ Tây Ban Nha']),
@@ -39,6 +48,15 @@ export function addVerifiedTuition(majors) {
     }
     if (major.universityId==='UIT' && !major.tuition) {
       major.tuition={value:42_000_000,period:'năm học',year:'2026–2027 · lộ trình khóa 2025',source:uitSource,approximate:true,note:'Bảng lộ trình học phí do UIT công bố cho KHÓA TUYỂN 2025, dự kiến năm học 2026–2027. Chưa có xác nhận đây là học phí áp dụng cho người nhập học khóa 2026. Chỉ tham khảo, không dùng làm bộ lọc học phí hiện tại.'};
+    }
+    if (major.universityId==='OU' && ouFees[major.name] && !major.tuition) {
+      major.tuition={value:ouFees[major.name],period:'năm học',year:'2026–2027 · khóa 2026',source:ouSource,note:'Mức DỰ KIẾN bình quân/năm của chương trình Chuẩn khóa tuyển 2026 theo bảng trường (PDF đính kèm). Thực thu có thể thay đổi theo số tín chỉ; trường ghi mức tăng nếu có không quá 10%/năm. Không áp dụng mức của chương trình Tiên tiến.'};
+    }
+    if (major.universityId==='UMP' && umpFees[major.name] && !major.tuition) {
+      major.tuition={value:umpFees[major.name],period:'năm học',year:'Khóa tuyển 2026',source:umpSource,note:'Học phí DỰ KIẾN theo đúng ngành tại trang 12 của thông tin tuyển sinh hệ chính quy năm 2026. Lộ trình trường công bố dự kiến tăng tối đa 10% cho từng năm; không suy ra mức thực thu năm sau.'};
+    }
+    if (major.universityId==='SGU' && sguWholeCourse[major.name] && !major.tuition) {
+      major.tuition={value:sguWholeCourse[major.name],period:'toàn khóa',year:'Khóa tuyển 2026',source:sguSource,note:'Phụ lục 6 tuyển sinh 2026 ghi HỌC PHÍ DỰ KIẾN TỔNG CỘNG TOÀN KHÓA cho đúng chương trình; không phải học phí một năm. Ngành sư phạm theo chính sách hỗ trợ riêng, chưa gán số chung.'};
     }
   }
 }

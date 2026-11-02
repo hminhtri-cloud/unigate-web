@@ -27,7 +27,7 @@ export function MajorCard({major,fit,onDetail}) {
   const university=catalog.universities.find(u=>u.id===major.universityId),saved=wishes.some(w=>w.majorId===major.id);
   return <article className="major-card"><div className="card-top"><span className={`school-badge school-${university.id}`}>{university.id}</span><button disabled={busy} className={`icon-button ${saved?'saved':''}`} aria-label={`${saved?'Bỏ lưu':'Lưu'} ${major.name}`} onClick={async()=>{setBusy(true);try{await toggleWish(major.id);}catch(e){notify(e.message,'error');}finally{setBusy(false);}}}><Bookmark size={20} fill={saved?'currentColor':'none'}/></button></div>
     <span className="field-label">{fields[major.field].name}</span><h3><button className="text-button" onClick={()=>onDetail(major)}>{major.name}</button></h3><p className="school-name">{university.name}</p>
-    <div className="major-tags"><span>{major.admissionYear?`Tuyển sinh ${major.admissionYear}`:'Danh mục đào tạo'}</span><span>{major.holland}</span>{!major.verified&&<span className="amber">Nguồn thứ cấp</span>}</div>
+    <div className="major-tags"><span>{major.admissionYear?`Tuyển sinh ${major.admissionYear}`:'Danh mục đào tạo'}</span><span>{major.holland}</span>{!major.verified&&<span className="amber">{major.source.kind==='secondary'?'Nguồn thứ cấp':'Chưa đối chiếu cơ sở tuyển sinh'}</span>}</div>
     <div className="major-facts"><div><small>Học phí / {major.tuition?.period||'năm'}{major.tuition?.year?` · ${major.tuition.year}`:''}</small><strong>{major.tuition?`${major.tuition.approximate?'≈ ':''}${money(major.tuition.value)}`:'Chưa đối chiếu'}</strong></div>{fit!=null&&<div><small>Chỉ số sở thích</small><strong className="blue">{fit}/100</strong></div>}<div className="cutoff-fact"><small>Điểm chuẩn theo từng phương thức</small><AdmissionScores major={major} compact/></div></div>
     <div className="card-footer"><button className="text-link" onClick={()=>onDetail(major)}>Khám phá ngành <ArrowRight size={15}/></button><button className={`icon-button ${compare.includes(major.id)?'saved':''}`} onClick={()=>toggleCompare(major.id)} aria-label={`So sánh ${major.name}`} aria-pressed={compare.includes(major.id)}>{compare.includes(major.id)?<Check size={18}/>:<GitCompareArrows size={18}/>}</button></div></article>;
 }
@@ -41,7 +41,7 @@ export function MajorDetail({major,onClose}) {
     <h3>Điểm chuẩn từng phương thức · Năm 2026</h3><AdmissionScores major={major}/>
     <h3>Tổ hợp và điều kiện tuyển sinh</h3><p>{major.combinations.length?major.combinations.join(' · '):'Xem tổ hợp và yêu cầu cụ thể trên cổng tuyển sinh của trường.'}</p>{major.admissionsNote&&<Notice>{major.admissionsNote}</Notice>}
     <h3>Liên hệ sở thích nghề nghiệp</h3><p>{[...major.holland].map(k=>`${k} – ${groups[k].name}`).join(' / ')}{fit!=null?` · Chỉ số tham khảo ${fit}/100.`:'.'}</p>
-    <Notice>{university.coverage}</Notice><div className="source-box"><SourceLink source={major.source}/><p>{major.source.title}</p><small>Đối chiếu ngày {major.source.checkedAt}. {major.source.kind==='secondary'?'Chưa xác minh được với đề án gốc của trường.':''}</small></div></Modal>;
+    <Notice>{university.coverage}</Notice><div className="source-box"><SourceLink source={major.source}/><p>{major.source.title}</p><small>Đối chiếu ngày {major.source.checkedAt}. {!major.verified?'Chưa đối chiếu được mã tuyển sinh/cơ sở đào tạo cho chương trình này.':''}</small></div></Modal>;
 }
 export function Radar({scores}) {
   const keys=Object.keys(groups),point=(i,r)=>[160+Math.sin(i*Math.PI/3)*r,150-Math.cos(i*Math.PI/3)*r];

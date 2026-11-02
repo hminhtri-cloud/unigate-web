@@ -12,6 +12,9 @@ const origin = {
   UMP: 'https://ump.edu.vn/tuyen-sinh-dao-tao/dai-hoc/tuyen-sinh/10836/thong-bao-diem-trung-tuyen-dai-hoc-he-chinh-quy-nam-2026',
   NLU: 'https://ts.hcmuaf.edu.vn/vn/tin-tuc/span-style-color-red-diem-trung-tuyen-diem-chuan-cac-nganh-dao-tao-trinh-do-dai-hoc-va-nganh-giao-duc-mam-non-trinh-do-c-60570',
   HCMUT: 'https://hcmut.edu.vn/tuyen-sinh/dai-hoc-chinh-quy/nganh-va-chi-tieu',
+  'PTIT-HCM': 'https://tuyensinh.ptit.edu.vn/thong-bao-diem-chuan-trung-tuyen-vao-dai-hoc-he-chinh-quy-nam-2026/',
+  SGU: 'https://tuyensinh.sgu.edu.vn/index.php/tuyen-sinh/diem-san-diem-trung-tuyen/nam-2026/thong-bao-diem-trung-tuyen-dot-1-ki-tuyen-sinh-dai-hoc-he-chinh-quy-nam-2026',
+  DTHU: 'https://tuyensinh.dthu.edu.vn/',
 };
 const record = (method, value, scale, source, note='') => ({ method, value:Number(value),scale,year:2026,source,note });
 const admissionRows = {};
@@ -160,8 +163,9 @@ add('NLU','thpt',30,`
 003|20.80
 004|23.50
 005|23.70
-006|20.50
-008|20.00
+ 006|20.50
+ 007|19.70
+ 008|20.00
 009|21.50
 010|23.65
 `,'Cột THPT/THPT+HB/THPT+CC trong bảng trường 2026; đây là ngưỡng chung của các biến thể, không phải điểm HB hoặc ĐGNL.');
@@ -171,8 +175,9 @@ add('NLU','dgnl',1200,`
 003|669
 004|809
 005|804
-006|659
-008|654
+ 006|659
+ 007|635
+ 008|654
 009|697
 010|801
 `,'ĐGNL ĐHQG-HCM 2026, cột điểm riêng trong thông báo chính thức.');
@@ -198,6 +203,76 @@ add('OU','dgnl',1200,`
 009|845
 010|807
 `,'Cột ĐGNL trong phụ lục cùng thông báo; không lấy điểm ĐGNL quy đổi từ điểm THPT của UniGate.');
+add('PTIT-HCM','thpt',30,`
+7520207|16.60
+7520208|17.00
+7520216|18.50
+7510301|19.05
+7480201|17.00
+7480202|23.22
+7329001|20.00
+7320104|24.00
+7340101|16.60
+7340115|16.75
+7340301|16.50
+7510301VM|22.75
+7480107|17.00
+7480102|17.50
+7340205|17.00
+`,'Chỉ lấy cột THPT 2026 thang 30 của cơ sở phía Nam BVS, không lấy điểm BVH Hà Nội.');
+add('PTIT-HCM','dgnl',1200,`
+7520207|602.27
+7520208|611.33
+7520216|645.33
+7510301|657.80
+7480201|611.33
+7480202|774.88
+7329001|679.33
+7320104|817.00
+7340101|602.27
+7340115|605.67
+7340301|600.00
+7510301VM|749.50
+7480107|611.33
+7480102|622.67
+7340205|611.33
+`,'Cột bài thi ĐGNL ĐHQG-HCM (V-ACT) thang 1200 công bố riêng cho BVS 2026; không tự quy đổi từ điểm THPT.');
+add('SGU','thpt-equivalent',30,`
+7140114|24.34
+7220201|25.38
+7229010|25.48
+7310401|24.15
+7310501|24.90
+7310601|23.06
+7310630|23.39
+7320201|22.06
+7340101|22.06
+7340120|23.14
+7340201|22.13
+7340301|22.69
+7340302|23.70
+7340406|23.00
+7380101|23.84
+7440301|22.44
+7460108|23.44
+7460112|25.89
+7480103|22.06
+7480107|23.11
+7480201|20.69
+7510301|23.48
+7510406|22.09
+7810101|24.58
+7140209|28.89
+7140231|27.50
+`,'Thông báo SGU 2026 ghi điểm đã QUY ĐỔI TƯƠNG ĐƯƠNG về tổ hợp gốc thang 30 cho tất cả phương thức, có thể bao gồm điểm cộng/ưu tiên; không phải ngưỡng điểm THPT độc lập.');
+add('DTHU','thpt',30,`
+7480208|16.45
+7420101|15.00
+`,'Cột điểm thi THPT năm 2026 trong bảng ngành trên cổng tuyển sinh Trường ĐH Đồng Tháp; không lấy số của năm 2025 cho các ngành khác.');
+add('DTHU','dgnl',1200,`
+7480208|612.61
+7420101|600.00
+`,'Cột điểm thi ĐGNL năm 2026 riêng của hai ngành trên cổng trường; không quy đổi sang thang 30.');
 
 const verifiedCodes = {
   UIT: '7480201,7480101,7480104,7480103,7480106,7480102,7480202,7340122,7460108,7480107,75202A1,7320104',
@@ -207,7 +282,7 @@ const verifiedCodes = {
   UAH: '7580101,7580105,7580108,7210403,7210404,7580201,7580302',
   OU: '7340201,7340301,7340302,7380101,7220201,7420201,7340101,,7310301,7480201',
   UEH: '734011501,,,734010101,734012001,7340122,748020101,7480202,7340205,748020102',
-  NLU: '7480201,7640101,7620105,7420201,7540101,7620109,,7620301,7850101,',
+  NLU: '7480201,7640101,7620105,7420201,7540101,7620109,7620201,7620301,7850101,',
 };
 
 export function addAdmissionScores(majors) {

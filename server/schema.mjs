@@ -1,4 +1,4 @@
-import { pool } from './db.mjs';
+import { pool } from "./db.mjs";
 export async function migrate() {
   const statements = [
     `CREATE TABLE IF NOT EXISTS universities (id VARCHAR(20) PRIMARY KEY, data JSON NOT NULL)`,
