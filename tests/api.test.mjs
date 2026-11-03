@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { createApp } from '../server/app.mjs';
+import app from '../api/index.js';
 import { query,pool } from '../server/db.mjs';
 import { questions,questionVersion } from '../data/questions.mjs';
 import { majors,universities } from '../data/catalog.mjs';
 
 test('MySQL integration: registration, authorization, scoring, persistence and session revocation',async t=>{
-  const server=createApp().listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
+  const server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
   const base=`http://127.0.0.1:${server.address().port}`;
   const email=`integration-${randomUUID()}@unigate.test`,otherEmail=`integration-${randomUUID()}@unigate.test`;
   let cookie='',otherCookie='';

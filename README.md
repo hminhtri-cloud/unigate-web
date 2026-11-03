@@ -1,6 +1,6 @@
 # UniGate — Student Edition (Web)
 
-Ứng dụng web chạy trên máy, tách biệt với dự án WinForms gốc tại `../My_project_UniGate-main`. Frontend React + Vite, API Node.js + Express, database **MySQL 8.4** chạy bằng Docker Compose. Không dùng mật khẩu, tài khoản hoặc database của dự án cũ.
+Ứng dụng web tách biệt với dự án WinForms gốc tại `../My_project_UniGate-main`. Frontend React + Vite, API Node.js + Express, database **MySQL 8.4**. Máy local chạy MySQL bằng Docker Compose; Vercel cần một MySQL có thể kết nối qua mạng. Không dùng mật khẩu, tài khoản hoặc database của dự án cũ.
 
 ## Chạy lần đầu
 
@@ -20,6 +20,20 @@ Mở **http://localhost:5185/** rồi tạo tài khoản học sinh. `npm run se
 Những lần sau chỉ cần `npm run db:up` và `npm run dev`. Dừng server bằng `Ctrl+C`; dừng MySQL bằng `docker compose stop` (dữ liệu vẫn lưu). Để chạy một server đơn sau khi build: `npm run build && npm start`, rồi mở **http://localhost:3001/**.
 
 Nếu cổng 3310 đã được sử dụng, đổi `MYSQL_PORT` trong `.env` sang một cổng trống trước khi chạy `npm run db:up`. Nếu 3001 hoặc 5185 đã bị chiếm, dừng ứng dụng trên cổng đó trước khi chạy (Vite proxy và Playwright đã cấu hình dùng các cổng cố định này).
+
+## Triển khai Vercel
+
+Kết nối **repository chứa bản web mới nhất** với Vercel, chọn thư mục gốc của dự án. `vercel.json` cấu hình Vite build vào `dist/` và chuyển `/api/*` tới Express function `api/index.js`. Không dùng `npm start` trên Vercel: `server/index.mjs` chỉ dành cho server chạy liên tục ở máy local. Dòng cảnh báo `engines.node >=22` hoặc cảnh báo cấu hình npm xuất hiện khi cài gói không tự nó là lỗi build; xem dòng `Error` cuối log hoặc `/api/health` để phân biệt lỗi build với lỗi kết nối database khi chạy.
+
+**MySQL trên Vercel phải là dịch vụ MySQL bên ngoài mà function kết nối được.** Container Docker ở máy cá nhân (`127.0.0.1:3310`) không thể truy cập từ Vercel. Trong **Project → Settings → Environment Variables**, đặt `MYSQL_HOST`, `MYSQL_PORT` (thường `3306`), `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`; nếu nhà cung cấp yêu cầu kết nối TLS, đặt `MYSQL_SSL=true` (xác minh chứng chỉ máy chủ). Đặt biến cho từng môi trường Vercel muốn chạy; function tự đánh dấu cookie đăng nhập `Secure` trên Vercel. Không đưa mật khẩu vào repository.
+
+Tạo database MySQL bên ngoài và nạp danh mục/câu hỏi **một lần trước khi sử dụng**. Từ máy có thể kết nối tới MySQL đó, đặt các biến production vào một file không theo dõi bởi Git (ví dụ `.env.production.local`), rồi chạy:
+
+```bash
+node --env-file=.env.production.local server/seed.mjs
+```
+
+Lệnh seed tạo bảng nếu cần và cập nhật danh mục, không xóa người dùng đã có. Sau khi redeploy, kiểm tra `https://<ten-mien>/api/health` trả `{"ok":true,"database":"MySQL"}`, sau đó mở trang web và thử đăng ký/đăng nhập. Vercel báo **Deployment completed** chỉ xác nhận build/deploy, chưa chứng minh MySQL kết nối được. Nếu dùng GitHub `hminhtri-cloud/unigate-web` trên Vercel nhưng Git remote ở máy là `hminhtri-cloud/unigate`, cần chuyển những thay đổi này sang **đúng repo `unigate-web`** trước khi Vercel tự deploy lại.
 
 ## Chức năng
 

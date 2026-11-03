@@ -31,7 +31,7 @@ async function verifyPassword(password, encoded) {
 async function createSession(res, id) {
   const token = randomBytes(32).toString('hex');
   await query('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 DAY))', [digest(token), id]);
-  res.cookie('unigate_session', token, { httpOnly: true, sameSite: 'strict', secure: process.env.COOKIE_SECURE === 'true', maxAge: 604800000, path: '/' });
+  res.cookie('unigate_session', token, { httpOnly: true, sameSite: 'strict', secure: process.env.VERCEL === '1' || process.env.COOKIE_SECURE === 'true', maxAge: 604800000, path: '/' });
 }
 async function authenticate(req, res, next) {
   const rows = await query('SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>UTC_TIMESTAMP()', [digest(cookieToken(req))]);
@@ -52,6 +52,7 @@ async function transactionForUser(userId, work) {
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  if (process.env.VERCEL === '1') app.set('trust proxy', 1);
   app.use((req,res,next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
