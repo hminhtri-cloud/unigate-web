@@ -54,6 +54,32 @@ test('MySQL integration: registration, authorization, scoring, persistence and s
       await request('/wishes/UIT-001','DELETE',{},otherCookie);assert.equal((await request('/wishes')).data.length,2);
       assert.equal((await request('/wishes','GET',undefined,otherCookie)).data.length,0);
     });
+    await t.test('admission profile validates four subjects, persists calculated combinations and stays private',async()=>{
+      const profile={confirmed:true,examSubjects:['math','literature','physics','english'],otherScores:{hsa:100,sat:1400}};
+      const body={subjects:{math:0,literature:7,physics:8,english:9},dgnl:900,admissionProfile:profile};
+      assert.equal((await request('/scores','PUT',{...body,admissionProfile:{...profile,examSubjects:['math','physics','english']}})).status,400);
+      assert.equal((await request('/scores','PUT',{...body,subjects:{...body.subjects,chemistry:10}})).status,400);
+      assert.equal((await request('/scores','PUT',{...body,subjects:{math:0,literature:7,physics:8}})).status,400);
+      assert.equal((await request('/scores','PUT',{...body,admissionProfile:{...profile,examSubjects:['math','math','physics','english']}})).status,400);
+      assert.equal((await request('/scores','PUT',{...body,admissionProfile:{...profile,otherScores:{hsa:151}}})).status,400);
+      assert.equal((await request('/scores','PUT',{...body,subjects:{math:0,literature:7,english:8,french:9},admissionProfile:{...profile,examSubjects:['math','literature','english','french']}})).status,400);
+      assert.equal((await request('/scores','PUT',{...body,combinations:[{code:'B00',total:30}]})).status,400);
+      const saved=await request('/scores','PUT',body);assert.equal(saved.status,200);
+      assert.deepEqual(saved.data.combinations.map(c=>c.code).sort(),['A01','C01','D01','D11']);
+      const reloaded=(await request('/scores')).data;
+      assert.deepEqual(reloaded.admissionProfile,profile);assert.equal(reloaded.dgnl,900);assert.equal(reloaded.subjects.math,0);
+      assert.deepEqual(reloaded.combinations,saved.data.combinations);
+      assert.equal((await request('/scores','GET',undefined,otherCookie)).data.admissionProfile,null);
+      const [row]=await query('SELECT p.data FROM admission_profiles p JOIN users u ON u.id=p.user_id WHERE u.email=?',[email]);
+      const stored=typeof row.data==='string'?JSON.parse(row.data):row.data;
+      assert.deepEqual(stored.combinations,saved.data.combinations);
+      assert.deepEqual(stored.availableMethods,['thpt','dgnl','dgnl-hn','sat']);
+      const hsaOnly={subjects:{},dgnl:null,admissionProfile:{confirmed:true,examSubjects:[],otherScores:{hsa:95}}};
+      assert.equal((await request('/scores','PUT',hsaOnly)).status,200);
+      assert.deepEqual((await request('/scores')).data.combinations,[]);
+      assert.equal((await request('/scores')).data.dgnl,null);
+      await request('/scores','PUT',body);
+    });
     await t.test('profile updates; cross-site writes blocked; logout and password rotation revoke old sessions',async()=>{
       assert.equal((await request('/me','PUT',{name:'Test Updated',school:'THPT Test',grade:'11'})).status,200);
       assert.equal((await request('/me')).data.grade,'11');

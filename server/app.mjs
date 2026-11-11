@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { query, pool, parseJson } from './db.mjs';
 import { questionVersion, questionNotice } from '../data/questions.mjs';
 import { calculateResult, combinationScores, fields, interestFit, subjects } from '../shared/domain.mjs';
+import {availableStudentMethods,exclusiveSubjectGroups,profileCombinations,otherExams} from '../shared/admission-profile.mjs';
 
 const scrypt = promisify(scryptCallback);
 const digest = value => createHash('sha256').update(value).digest('hex');
@@ -18,6 +19,19 @@ const cookieToken = req => (req.headers.cookie || '').split(';').map(x => x.trim
 const publicResult = row => ({ id: row.id, scores: parseJson(row.scores), answers: parseJson(row.answers), code: row.code, version: row.version, createdAt: row.created_at });
 const answerSchema = z.record(z.string().regex(/^([1-9]|[1-5][0-9]|60)$/), z.number().int().min(1).max(5));
 const subjectSchema = z.object(Object.fromEntries(Object.keys(subjects).map(key => [key, z.number().min(0).max(10).optional()]))).strict();
+const admissionProfileSchema=z.object({
+  confirmed:z.literal(true),
+  examSubjects:z.array(z.enum(Object.keys(subjects))).max(4),
+  otherScores:z.object(Object.fromEntries(Object.entries(otherExams).map(([key,exam])=>[key,z.number().min(0).max(exam.scale).optional()]))).strict(),
+}).strict();
+const scoresSchema=z.object({subjects:subjectSchema,dgnl:z.number().min(0).max(1200).nullable(),admissionProfile:admissionProfileSchema.optional()}).strict().superRefine((body,ctx)=>{
+  const p=body.admissionProfile;if(!p)return;
+  const keys=p.examSubjects;
+  if(new Set(keys).size!==keys.length|| (keys.length!==0&&(keys.length!==4||!keys.includes('math')||!keys.includes('literature'))))ctx.addIssue({code:'custom',path:['admissionProfile','examSubjects'],message:'Chọn Toán, Ngữ văn và đúng 2 môn tự chọn; hoặc không dùng điểm thi THPT.'});
+  if(exclusiveSubjectGroups.some(group=>keys.filter(key=>group.includes(key)).length>1))ctx.addIssue({code:'custom',path:['admissionProfile','examSubjects'],message:'Chỉ chọn một ngoại ngữ và một định hướng Công nghệ trong kỳ thi.'});
+  if(Object.keys(body.subjects).length!==keys.length||keys.some(key=>!Object.hasOwn(body.subjects,key)))ctx.addIssue({code:'custom',path:['subjects'],message:'Cần nhập điểm cho đúng các môn thi đã chọn, không thêm môn ngoài kỳ thi.'});
+  if(!availableStudentMethods(body).length)ctx.addIssue({code:'custom',path:['admissionProfile'],message:'Cần ít nhất một phương thức có điểm và dữ liệu tổ hợp nhận diện được.'});
+});
 
 async function hashPassword(password) {
   const salt = randomBytes(16).toString('hex');
@@ -90,7 +104,7 @@ export function createApp() {
   app.get('/api/catalog', async (req,res) => {
     const universities = (await query('SELECT data FROM universities ORDER BY id')).map(row => parseJson(row.data));
     const majors = (await query('SELECT data FROM majors ORDER BY id')).map(row => parseJson(row.data));
-    res.json({ universities, majors, fields, updatedAt: '2026-10-31' });
+    res.json({ universities, majors, fields, updatedAt: '2026-11-09' });
   });
   app.use('/api',authenticate);
   app.get('/api/me', (req,res) => res.json(safeUser(req.user)));
@@ -144,12 +158,20 @@ export function createApp() {
   app.get('/api/scores',async (req,res) => {
     const [row] = await query('SELECT subjects,dgnl FROM scores WHERE user_id=?',[req.user.id]);
     const values = row ? parseJson(row.subjects) : {};
-    res.json({ subjects:values,dgnl:row?.dgnl ?? null, combinations:combinationScores(values) });
+    const [profile]=await query('SELECT data FROM admission_profiles WHERE user_id=?',[req.user.id]);
+    const data=profile?parseJson(profile.data):null;
+    const scores={subjects:values,dgnl:row?.dgnl==null?null:Number(row.dgnl),admissionProfile:data?.admissionProfile||null};
+    res.json({...scores,combinations:scores.admissionProfile?profileCombinations(scores):combinationScores(values)});
   });
   app.put('/api/scores',async (req,res) => {
-    const body = z.object({ subjects:subjectSchema, dgnl:z.number().min(0).max(1200).nullable() }).parse(req.body);
-    await query('INSERT INTO scores (user_id,subjects,dgnl) VALUES (?,?,?) ON DUPLICATE KEY UPDATE subjects=VALUES(subjects),dgnl=VALUES(dgnl)',[req.user.id,JSON.stringify(body.subjects),body.dgnl]);
-    res.json({ ...body, combinations:combinationScores(body.subjects) });
+    const body = scoresSchema.parse(req.body);
+    const combinations=body.admissionProfile?profileCombinations(body):combinationScores(body.subjects);
+    await transactionForUser(req.user.id,async c=>{
+      await c.execute('INSERT INTO scores (user_id,subjects,dgnl) VALUES (?,?,?) ON DUPLICATE KEY UPDATE subjects=VALUES(subjects),dgnl=VALUES(dgnl)',[req.user.id,JSON.stringify(body.subjects),body.dgnl]);
+      if(body.admissionProfile)await c.execute('INSERT INTO admission_profiles (user_id,data) VALUES (?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)',[req.user.id,JSON.stringify({admissionProfile:body.admissionProfile,combinations,availableMethods:availableStudentMethods(body)})]);
+      else await c.execute('DELETE FROM admission_profiles WHERE user_id=?',[req.user.id]);
+    });
+    res.json({ ...body,admissionProfile:body.admissionProfile||null, combinations });
   });
   app.get('/api/wishes',async (req,res) => res.json(await query('SELECT major_id AS majorId,position,note FROM wishes WHERE user_id=? ORDER BY position,major_id',[req.user.id])));
   app.post('/api/wishes',async (req,res) => {

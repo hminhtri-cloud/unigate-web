@@ -3,31 +3,42 @@ import {ArrowRight,ChevronLeft,ChevronRight,GitCompareArrows,MapPin,Search,Slide
 import {useApp} from './context';
 import {normalize} from './api';
 import {Button,Empty,Link,MajorCard,MajorDetail,Notice,PageTitle,SourceLink} from './components';
-import {admissionGroup,comparableAnnualTuition,fields,interestFit,matchesHolland,matchesSchoolFilter,sortCatalogMajors} from '../shared/domain.mjs';
+import {admissionGroup,admissionMethodLabel,emptySchoolFilters,fields,interestFit,matchesHolland,matchesSchoolFilter,partitionByAnnualTuition,schoolFiltersFromParams,sortCatalogMajors} from '../shared/domain.mjs';
+import SchoolFilters from './SchoolFilters';
+import CombinationFilter from './CombinationFilter';
 
 const pageSize=12;
 export default function Explore({params}) {
   const {catalog,results,compare,scores}=useApp();
+  const sourceMajors=catalog.majors;
+  const visibleUniversities=catalog.universities;
   const initialUniversity=params.get('university')||'';
-  const initialGroup=initialUniversity && admissionGroup(catalog.majors.find(m=>m.universityId===initialUniversity) || {})==='composite' ? 'composite':'thpt';
+  const initialGroup=initialUniversity && admissionGroup(sourceMajors.find(m=>m.universityId===initialUniversity) || {})==='composite' ? 'composite':'thpt';
   const [tab,setTab]=useState(params.get('mode')==='composite'?'composite':initialGroup);
   const [search,setSearch]=useState(''),[field,setField]=useState(params.get('field')||'');
-  const [university,setUniversity]=useState(initialUniversity),[system,setSystem]=useState(params.get('system')||'');
-  const [sort,setSort]=useState(params.get('sort')||'name'),[budget,setBudget]=useState(''),[combo,setCombo]=useState(params.get('combo')||'');
+  const [university,setUniversity]=useState(initialUniversity),[activeSchoolFilters,setSchoolFilters]=useState(()=>schoolFiltersFromParams(params));
+  function changeSchoolFilters(next) {setSchoolFilters(next);setUniversity('');}
+  const [sort,setSort]=useState(params.get('sort')||'name'),[budget,setBudget]=useState(''),[combo,setCombo]=useState(params.getAll('combo').filter(Boolean));
+  const [method,setMethod]=useState(params.get('method')||'');
+  const [applicantGroup,setApplicantGroup]=useState(params.get('applicantGroup')||'');
   const [verified,setVerified]=useState(false),[page,setPage]=useState(1),[missingPage,setMissingPage]=useState(1);
-  const [showMissing,setShowMissing]=useState(Boolean(initialUniversity && catalog.majors.filter(m=>m.universityId===initialUniversity).every(m=>admissionGroup(m)==='unverified')));
+  const [showMissing,setShowMissing]=useState(Boolean(initialUniversity && sourceMajors.filter(m=>m.universityId===initialUniversity).every(m=>admissionGroup(m)==='unverified')));
   const [detail,setDetail]=useState(null);
-  useEffect(()=>{setPage(1);setMissingPage(1);},[search,field,university,system,sort,budget,combo,verified,tab]);
+  const [tuitionPage,setTuitionPage]=useState(1);
+  useEffect(()=>{setPage(1);setMissingPage(1);setTuitionPage(1);},[search,field,university,activeSchoolFilters,sort,budget,combo,method,applicantGroup,verified,tab]);
 
-  const matching=useMemo(()=>catalog.majors.map(m=>({...m,fit:interestFit(results[0]?.scores,m.holland)})).filter(m=>{
+  const allMatching=useMemo(()=>sourceMajors.map(m=>({...m,fit:interestFit(results[0]?.scores,m.holland)})).filter(m=>{
     const school=catalog.universities.find(u=>u.id===m.universityId);
     return (!search||normalize(`${m.name} ${m.code||''} ${school.name} ${school.id} ${fields[m.field].name}`).includes(normalize(search)))
       &&(!field||m.field===field)&&(!university||m.universityId===university)
-      &&matchesSchoolFilter(school,system)
+      &&matchesSchoolFilter(school,activeSchoolFilters)
       &&(!sort.startsWith('holland-cutoff-')||matchesHolland(m,results[0]?.code))
-      &&(!budget||(comparableAnnualTuition(m)!==null&&comparableAnnualTuition(m)<=Number(budget)*1_000_000))
-      &&(!combo||m.combinations.includes(combo))&&(!verified||m.verified);
-  }),[catalog,results,search,field,university,system,sort,budget,combo,verified]);
+      &&(!combo.length||combo.some(code=>m.combinations.includes(code)))&&(!verified||m.verified);
+  }).filter(m=>(!method||m.admissionScores.some(s=>s.method===method))&&(!applicantGroup||m.admissionScores.some(s=>s.applicantGroup===applicantGroup)))
+    .map(m=>applicantGroup?{...m,admissionScores:m.admissionScores.filter(s=>!s.applicantGroup||s.applicantGroup===applicantGroup)}:m),[catalog,sourceMajors,results,search,field,university,activeSchoolFilters,sort,budget,combo,method,applicantGroup,verified]);
+  const tuition=partitionByAnnualTuition(allMatching,budget),matching=tuition.matching;
+  const tuitionUnknown=sortCatalogMajors(tuition.unknown,'name');
+  const tuitionPages=Math.max(1,Math.ceil(tuitionUnknown.length/pageSize)),activeTuitionPage=Math.min(tuitionPage,tuitionPages);
 
   const thptCount=matching.filter(m=>admissionGroup(m)==='thpt').length;
   const compositeCount=matching.filter(m=>admissionGroup(m)==='composite').length;
@@ -40,27 +51,34 @@ export default function Explore({params}) {
   function selectUniversity(id) {
     setUniversity(id);
     if (!id) return;
-    const schoolMajors=catalog.majors.filter(m=>m.universityId===id);
+    const schoolMajors=sourceMajors.filter(m=>m.universityId===id);
+    if(applicantGroup&&!schoolMajors.some(m=>m.admissionScores.some(s=>s.applicantGroup===applicantGroup)))setApplicantGroup('');
     if (schoolMajors.some(m=>admissionGroup(m)==='composite')) setTab('composite');
     else if (schoolMajors.some(m=>admissionGroup(m)==='thpt')) setTab('thpt');
     else setShowMissing(true);
   }
   function reset() {
-    setSearch('');setField('');setUniversity('');setSystem('');setBudget('');setCombo('');setVerified(false);
+    setSearch('');setField('');changeSchoolFilters({...emptySchoolFilters});setBudget('');setCombo([]);setVerified(false);
+    setMethod('');
+    setApplicantGroup('');
     setSort('name');setTab('thpt');setShowMissing(false);
   }
   return <>
-    <PageTitle title="Tra cứu chương trình chi tiết" eyebrow="ĐIỂM CHUẨN & HỌC PHÍ" action={<Link to="universities" className="button">Quay lại Chọn trường</Link>}>Chọn cách xét điểm để so sánh chương trình đúng phương thức và đúng thang điểm tại {catalog.universities.length} trường/cơ sở.</PageTitle>
+    <PageTitle title="Tra cứu chương trình chi tiết" eyebrow="ĐIỂM CHUẨN & HỌC PHÍ" action={<Link to="universities" className="button">Quay lại Chọn trường</Link>}>Tra cứu toàn bộ danh mục tại {catalog.universities.length} trường/cơ sở, độc lập với ngành và hồ sơ xét tuyển đã chọn. Mỗi chương trình giữ đúng phương thức, thang điểm và học phí được đối chiếu.</PageTitle>
     <div className="explore-layout">
       <aside className="panel filters">
         <h3><SlidersHorizontal size={18}/> Bộ lọc của bạn</h3>
         <label>Nhóm ngành<select value={field} onChange={e=>setField(e.target.value)}><option value="">Tất cả nhóm ngành</option>{Object.entries(fields).map(([id,f])=><option value={id} key={id}>{f.name}</option>)}</select></label>
-        <label>Nhóm trường<select value={system} onChange={e=>{setSystem(e.target.value);setUniversity('');}}><option value="">Tất cả trường</option><optgroup label="Theo khu vực"><option value="area:hcm">Tất cả trường tại TP.HCM</option></optgroup><optgroup label="Theo hệ thống"><option value="ĐHQG-HCM">8 trường thuộc ĐHQG-HCM</option><option value="Trường tại TP.HCM">{catalog.universities.filter(u=>u.system==='Trường tại TP.HCM').length} trường/cơ sở TP.HCM (nhóm gốc)</option><option value="Trường tại Cần Thơ">Đại học Cần Thơ</option><option value="Trường miền Nam khác">10 trường miền Nam bổ sung</option><option value="Trường miền Nam mở rộng">10 trường/cơ sở miền Nam tiếp theo</option></optgroup><optgroup label="Theo loại hình"><option value="type:public">Trường công</option><option value="type:private">Trường tư</option></optgroup></select></label>
-        <label>Trường đại học<select value={university} onChange={e=>selectUniversity(e.target.value)}><option value="">Tất cả {catalog.universities.filter(u=>matchesSchoolFilter(u,system)).length} trường</option>{['ĐHQG-HCM','Trường tại TP.HCM','Trường tại Cần Thơ','Trường miền Nam khác','Trường miền Nam mở rộng'].map(group=><optgroup label={group} key={group}>{catalog.universities.filter(u=>u.system===group&&matchesSchoolFilter(u,system)).map(u=><option key={u.id} value={u.id}>{u.id} – {u.name.replace('Trường Đại học ','')}</option>)}</optgroup>)}</select></label>
+        <SchoolFilters value={activeSchoolFilters} onChange={changeSchoolFilters}/>
+        <label>Trường / cơ sở đào tạo<select value={university} onChange={e=>selectUniversity(e.target.value)}><option value="">Tất cả {visibleUniversities.filter(u=>matchesSchoolFilter(u,activeSchoolFilters)).length} trường</option>{[...new Set(visibleUniversities.map(u=>u.system))].map(group=><optgroup label={group} key={group}>{visibleUniversities.filter(u=>u.system===group&&matchesSchoolFilter(u,activeSchoolFilters)).map(u=><option key={u.id} value={u.id}>{u.id} – {u.name.replace('Trường Đại học ','')}</option>)}</optgroup>)}</select></label>
         <label>Học phí tối đa / năm<select value={budget} onChange={e=>setBudget(e.target.value)}><option value="">Không giới hạn</option>{[35,45,55,70].map(n=><option key={n} value={n}>{n} triệu đồng</option>)}</select></label>
-        <label>Tổ hợp đã đối chiếu<select value={combo} onChange={e=>setCombo(e.target.value)}><option value="">Tất cả tổ hợp</option>{[...new Set(catalog.majors.flatMap(m=>m.combinations))].sort().map(c=><option key={c}>{c}</option>)}</select></label>
+        <CombinationFilter label="Tổ hợp đã đối chiếu" options={[...new Set(sourceMajors.flatMap(m=>m.combinations))].sort().map(code=>({value:code,label:code}))} value={combo} onChange={setCombo}/>
+        <label>Phương thức có dữ liệu<select value={method} onChange={e=>{setMethod(e.target.value);setShowMissing(true);}}><option value="">Tất cả phương thức</option>{[...new Set(sourceMajors.flatMap(m=>m.admissionScores.map(s=>s.method)))].map(key=><option key={key} value={key}>{admissionMethodLabel[key]||key}</option>)}</select></label>
+        <label>Đối tượng xét tuyển có dữ liệu<select value={applicantGroup} onChange={e=>{setApplicantGroup(e.target.value);setShowMissing(true);}}><option value="">Tất cả đối tượng</option>{[...new Set(catalog.majors.flatMap(m=>m.admissionScores.map(s=>s.applicantGroup).filter(Boolean)))].sort().map(group=><option key={group} value={group}>{group}</option>)}</select></label>
         <label className="checkbox-label"><input type="checkbox" checked={verified} onChange={e=>setVerified(e.target.checked)}/> Chỉ nguồn chính thức</label>
-        <p className="caption">Lọc học phí/năm không tính giá theo đợt/tín chỉ/học kỳ, lộ trình dự kiến khóa khác hoặc số liệu năm cũ; tổ hợp chỉ dùng dữ liệu đã đối chiếu.</p>
+        <p className="caption">Khi lọc học phí, chương trình phù hợp mức /năm hiện trước; chương trình chưa đủ dữ liệu /năm nằm ở nhóm riêng cuối danh sách. Không tự quy đổi mức theo đợt/tín chỉ/học kỳ hoặc khóa khác.</p>
+        <p className="caption">Mã tổ hợp giữ theo công bố từng trường. Lọc tổ hợp là lọc danh mục chương trình; mức điểm áp dụng cho tổ hợp nào được ghi riêng ở từng phương thức. Bộ tính tổng môn không thay thế công thức có trọng số hoặc năng khiếu.</p>
+        <p className="caption">ĐT01/ĐT02/ĐT03 là nhóm do trường công bố. Khi các nhóm có điểm khác nhau, cần chọn nhóm trước khi xếp điểm; không tự lấy điểm ĐT01 cho mọi người.</p>
         <Button className="full" onClick={reset}>Xóa bộ lọc</Button>
         <div className="filter-note"><MapPin size={18}/><strong>Miền Nam</strong><p>Có trường ở Đông Nam Bộ, Đồng bằng sông Cửu Long và cơ sở ĐHQG-HCM tại An Giang.</p></div>
       </aside>
@@ -74,12 +92,24 @@ export default function Explore({params}) {
         <div className="result-count"><span><strong>{filtered.length}</strong> ngành / chương trình · {tab==='thpt'?'Điểm THPT':'Xét tổng hợp'}</span>{compare.length>0&&<Link to="compare" className="text-link"><GitCompareArrows size={16}/> So sánh ({compare.length}/3)</Link>}</div>
         {sort.startsWith('holland-cutoff-')&&<Notice>Mã Holland {results[0]?.code}: lọc ngành theo nhóm mạnh nhất và một nhóm khác trong top 3 (nhóm C có thể ở vị trí bất kỳ). <strong>Xếp mức phù hợp Holland trước; khi bằng nhau mới xét điểm {tab==='thpt'?'THPT /30':'tổng hợp /100 trong cùng trường'}.</strong></Notice>}
         {tab==='composite'&&<Notice>Điểm tổng hợp /100 của Bách khoa, UIT, HCMUS và các trường khác có công thức khác nhau. UniGate chỉ sắp điểm <strong>trong cùng trường</strong>; không quy đổi chéo giữa các trường.</Notice>}
-        {combo&&scores.combinations.find(c=>c.code===combo)&&<Notice>Điểm {combo} của bạn: <strong>{scores.combinations.find(c=>c.code===combo).total}/30</strong> (chưa ưu tiên, chưa quy đổi). Đây chỉ là lọc tổ hợp, không xác nhận đủ điều kiện trúng tuyển.</Notice>}
+        {tab==='composite'&&!applicantGroup&&matching.some(m=>m.admissionScores.some(s=>s.applicantGroup))&&<Notice>Có trường công bố điểm theo ĐT01/ĐT02/ĐT03. Chọn <strong>Đối tượng xét tuyển có dữ liệu</strong> để xem và xếp đúng nhóm; khi các nhóm có điểm khác nhau, UniGate không tự lấy điểm của nhóm đầu tiên.</Notice>}
+        {combo.some(code=>scores.combinations.some(c=>c.code===code))&&<Notice>Điểm tổ hợp của bạn: <strong>{scores.combinations.filter(c=>combo.includes(c.code)).map(c=>`${c.code}: ${c.total}/30`).join(' · ')}</strong> (chưa ưu tiên, chưa quy đổi). Đây chỉ là lọc tổ hợp, không xác nhận đủ điều kiện trúng tuyển.</Notice>}
         {filtered.length?<>
           {tab==='composite'?[...new Set(currentPage.map(m=>m.universityId))].map(id=><section key={id}><h3 className="method-school-heading">{catalog.universities.find(u=>u.id===id)?.name} <small>· xét tổng hợp /100</small></h3><div className="major-grid explore-grid">{currentPage.filter(m=>m.universityId===id).map(m=><MajorCard key={m.id} major={m} fit={m.fit} onDetail={setDetail}/>)}</div></section>):<div className="major-grid explore-grid">{currentPage.map(m=><MajorCard key={m.id} major={m} fit={m.fit} onDetail={setDetail}/>)}</div>}
         </>:<Empty title={search?'Chưa có ngành khớp bộ lọc':'Không có ngành trong nhóm này'}>Thử đổi tab hoặc tìm ngành chưa có dữ liệu điểm ở mục bên dưới.</Empty>}
         {pages>1&&<div className="pagination"><Button disabled={activePage===1} onClick={()=>{setPage(p=>p-1);window.scrollTo(0,0);}} aria-label="Trang trước"><ChevronLeft size={18}/></Button><span>Trang {activePage} / {pages}</span><Button disabled={activePage===pages} onClick={()=>{setPage(p=>p+1);window.scrollTo(0,0);}} aria-label="Trang sau"><ChevronRight size={18}/></Button></div>}
-        {missing.length>0&&<section className="unverified-section"><button type="button" className="text-link" aria-expanded={showMissing} onClick={()=>setShowMissing(v=>!v)}>{showMissing?'Ẩn':'Xem'} {missing.length} ngành chưa có dữ liệu điểm <ArrowRight size={16}/></button>{showMissing&&<><p className="caption">Các ngành này vẫn tra cứu, lưu nguyện vọng và so sánh được; UniGate chưa có điểm chuẩn gắn chính xác với chương trình.</p><div className="major-grid explore-grid">{missing.slice((missingPage-1)*pageSize,missingPage*pageSize).map(m=><MajorCard key={m.id} major={m} fit={m.fit} onDetail={setDetail}/>)}</div>{missing.length>pageSize&&<div className="pagination"><Button disabled={missingPage===1} onClick={()=>setMissingPage(n=>n-1)} aria-label="Trang ngành chưa có điểm trước"><ChevronLeft size={18}/></Button><span>Trang {missingPage} / {Math.ceil(missing.length/pageSize)}</span><Button disabled={missingPage===Math.ceil(missing.length/pageSize)} onClick={()=>setMissingPage(n=>n+1)} aria-label="Trang ngành chưa có điểm sau"><ChevronRight size={18}/></Button></div>}</>}</section>}
+        {missing.length>0&&<section className="unverified-section">
+          <button type="button" className="text-link" aria-expanded={showMissing} onClick={()=>setShowMissing(v=>!v)}>{showMissing?'Ẩn':'Xem'} {missing.length} ngành chưa có dữ liệu điểm THPT / tổng hợp <ArrowRight size={16}/></button>
+          {showMissing&&<>
+            <p className="caption">Có {missing.filter(m=>m.admissionScores.length).length} chương trình có điểm ở phương thức khác (ví dụ học bạ, năng khiếu); {missing.filter(m=>!m.admissionScores.length).length} chương trình chưa có điểm chuẩn đối chiếu. Xem từng phương thức trong chi tiết ngành; không hiểu thiếu điểm là điểm 0.</p>
+            <div className="major-grid explore-grid">{missing.slice((missingPage-1)*pageSize,missingPage*pageSize).map(m=><MajorCard key={m.id} major={m} fit={m.fit} onDetail={setDetail}/>)}</div>
+            {missing.length>pageSize&&<div className="pagination"><Button disabled={missingPage===1} onClick={()=>setMissingPage(n=>n-1)} aria-label="Trang ngành chưa có điểm trước"><ChevronLeft size={18}/></Button><span>Trang {missingPage} / {Math.ceil(missing.length/pageSize)}</span><Button disabled={missingPage===Math.ceil(missing.length/pageSize)} onClick={()=>setMissingPage(n=>n+1)} aria-label="Trang ngành chưa có điểm sau"><ChevronRight size={18}/></Button></div>}
+          </>}
+        </section>}
+        {tuitionUnknown.length>0&&<section className="tuition-unknown-section tuition-unknown-programs"><h2>Các ngành chưa có dữ liệu học phí/năm để đối chiếu</h2><p className="caption">{tuitionUnknown.length} chương trình khớp các bộ lọc còn lại, chưa đủ thông tin học phí/năm để xác nhận phù hợp mức {budget} triệu. Mức theo tín chỉ, học kỳ, toàn khóa hoặc khóa khác vẫn xem được trong chi tiết; không coi là học phí bằng 0.</p>
+          <div className="major-grid explore-grid">{tuitionUnknown.slice((activeTuitionPage-1)*pageSize,activeTuitionPage*pageSize).map(m=><MajorCard key={m.id} major={m} fit={m.fit} onDetail={setDetail}/>)}</div>
+          {tuitionPages>1&&<div className="pagination"><Button disabled={activeTuitionPage===1} onClick={()=>setTuitionPage(p=>p-1)} aria-label="Trang ngành chưa có học phí trước"><ChevronLeft size={18}/></Button><span>Trang {activeTuitionPage} / {tuitionPages}</span><Button disabled={activeTuitionPage===tuitionPages} onClick={()=>setTuitionPage(p=>p+1)} aria-label="Trang ngành chưa có học phí sau"><ChevronRight size={18}/></Button></div>}
+        </section>}
       </section>
     </div>
     {detail&&<MajorDetail major={detail} onClose={()=>setDetail(null)}/>}
@@ -88,8 +118,8 @@ export default function Explore({params}) {
 
 export function Universities(){
   const {catalog}=useApp();
-  const groups=['ĐHQG-HCM','Trường tại TP.HCM','Trường tại Cần Thơ','Trường miền Nam khác','Trường miền Nam mở rộng'];
-  const title=system=>system==='ĐHQG-HCM'?'Thành viên ĐHQG-HCM':system==='Trường tại Cần Thơ'?'Đại học Cần Thơ':system==='Trường tại TP.HCM'?`${catalog.universities.filter(u=>u.system===system).length} trường/cơ sở khác tại TP.HCM`:system==='Trường miền Nam khác'?'10 trường miền Nam bổ sung':'10 trường/cơ sở miền Nam tiếp theo';
+  const groups=[...new Set(catalog.universities.map(u=>u.system))];
+  const title=system=>`${system} (${catalog.universities.filter(u=>u.system===system).length})`;
   return <><PageTitle title={`${catalog.universities.length} trường và cơ sở đào tạo`} eyebrow="DANH MỤC TRƯỜNG ĐẠI HỌC">Khám phá trường theo khu vực và loại hình đào tạo. Một số mục là phân hiệu, không phải trường độc lập; đây không phải bảng xếp hạng.</PageTitle>{groups.map(system=><section key={system}><div className="section-heading"><h2>{title(system)}</h2></div><div className="university-grid">{catalog.universities.filter(u=>u.system===system).map(u=><article className="panel university-card" key={u.id}><div className={`university-cover school-${u.id}`}><span>{u.id}</span><small>{system==='ĐHQG-HCM'?'VNU-HCM':u.province.toUpperCase()}</small></div><div className="university-body"><span className="field-label">{u.code?`Mã trường ${u.code} · `:''}{u.province} · {u.institutionType==='private'?'Trường tư':'Trường công'}</span><h2>{u.name}</h2><p>{u.description}</p><p className="caption">{u.coverage}</p><div className="section-heading"><strong>{catalog.majors.filter(m=>m.universityId===u.id).length} ngành / chương trình đã nhập</strong><SourceLink source={u.source}/></div><Link className="button full" to={`lookup?university=${u.id}`}>Khám phá ngành học <ArrowRight size={16}/></Link></div></article>)}</div></section>)}</>;
 }
 export function Sources(){

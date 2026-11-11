@@ -1,0 +1,111 @@
+import { fields } from '../shared/domain.mjs';
+
+// Curated discovery catalogue, checked against institution pages on 2026-11-07.
+// Rows can be programmes/specialisations, not necessarily independent admission codes.
+// Geography follows the current city boundary; former provinces are stated explicitly.
+const checkedAt = '2026-11-07';
+const schools = [
+  ['IUH','Đại học Công nghiệp Thành phố Hồ Chí Minh','public','https://tuyensinh.iuh.edu.vn/',
+    'Kỹ thuật ứng dụng, công nghệ, thực phẩm và môi trường.',
+    'Chọn lọc chương trình tại trụ sở TP.HCM; không gồm phân hiệu Quảng Ngãi. Nhóm CNTT và các chuyên ngành không được tự tách thành mã xét tuyển.',
+    'Công nghệ kỹ thuật điện, điện tử|engineering;Công nghệ kỹ thuật cơ khí|engineering;Công nghệ kỹ thuật cơ điện tử|engineering;Công nghệ kỹ thuật ô tô|engineering;Công nghệ kỹ thuật nhiệt|engineering;Kỹ thuật xây dựng|engineering;Công nghệ thông tin|it;Thiết kế thời trang|media;Dược học|health;Công nghệ thực phẩm|bio;Đảm bảo chất lượng và An toàn thực phẩm|bio;Dinh dưỡng và Khoa học thực phẩm|health;Công nghệ sinh học|bio;Quản lý tài nguyên và môi trường|environment;Công nghệ kỹ thuật môi trường|environment'],
+  ['HUFLIT','Trường Đại học Ngoại ngữ – Tin học Thành phố Hồ Chí Minh','private','https://huflit.edu.vn/',
+    'Ngôn ngữ, công nghệ thông tin, đối ngoại và dịch vụ.',
+    'Ngành chọn lọc từ danh mục đào tạo trên cổng trường; điều kiện tuyển sinh từng ngành xem thông báo gốc.',
+    'Ngôn ngữ Anh|language;Ngôn ngữ Trung Quốc|language;Ngôn ngữ Nhật|language;Ngôn ngữ Hàn|language;Đông phương học|language;Công nghệ thông tin|it;Kỹ thuật phần mềm|it;Trí tuệ nhân tạo|it;Luật|law;Luật kinh tế|law;Quan hệ quốc tế|social;Quan hệ công chúng|media;Truyền thông đa phương tiện|media;Quản trị dịch vụ du lịch và lữ hành|tourism;Quản trị khách sạn|tourism'],
+  ['VHU','Trường Đại học Văn Hiến','private','https://tuyensinh.vhu.edu.vn/',
+    'Xã hội nhân văn, ngôn ngữ, nghệ thuật và du lịch.',
+    'Chọn lọc ngành trên cổng tuyển sinh; không gồm chương trình liên kết quốc tế cùng tên.',
+    'Văn học|social;Xã hội học|social;Tâm lý học|social;Việt Nam học|social;Ngôn ngữ Pháp|language;Ngôn ngữ Nhật|language;Ngôn ngữ Trung Quốc|language;Điều dưỡng|health;Công nghệ sinh học|bio;Kỹ thuật môi trường|environment;Công nghệ thực phẩm|bio;Thanh nhạc|media;Piano|media;Đạo diễn điện ảnh, truyền hình|media;Quản trị nhà hàng và dịch vụ ăn uống|tourism'],
+  ['STU','Trường Đại học Công nghệ Sài Gòn','private','https://stu.edu.vn/',
+    'Công nghệ thông tin, thực phẩm, kinh tế và thiết kế.',
+    'Danh mục chọn lọc từ chương trình/khoa trên cổng trường; chưa đối chiếu toàn bộ 18 ngành tuyển sinh.',
+    'Công nghệ thông tin|it;Công nghệ thực phẩm|bio;Quản trị kinh doanh|business;Thiết kế đồ họa|media'],
+  ['SIU','Trường Đại học Tư thục Quốc tế Sài Gòn','private','https://siu.edu.vn/nganh-chuyen-nganh-dao-tao/',
+    'Công nghệ, kinh doanh, khoa học xã hội và ngôn ngữ.',
+    'Tên ngành/chuyên ngành theo danh mục chương trình của SIU; không coi mỗi hướng chuyên ngành là một mã xét tuyển riêng.',
+    'Truyền thông đa phương tiện|media;Công nghệ thông tin|it;Công nghệ giáo dục|education;Quản trị kinh doanh|business;Logistics và quản lý chuỗi cung ứng|business;Hàn Quốc học|language;Nhật Bản học|language;Quan hệ công chúng|media;Thiết kế đồ họa|media;Quản trị khách sạn|tourism;Thương mại điện tử|business;Tâm lý học tham vấn và trị liệu|social'],
+  ['UMT','Trường Đại học Quản lý và Công nghệ Thành phố Hồ Chí Minh','private','https://www.umt.edu.vn/',
+    'Công nghệ, truyền thông, nghệ thuật ứng dụng và quản lý thể thao.',
+    'Ngành từ danh mục đào tạo chính thức của UMT tại Cát Lái.',
+    'Công nghệ thông tin|it;Khoa học máy tính|it;An ninh mạng|it;Truyền thông đa phương tiện|media;Thiết kế đồ họa|media;Quản lý thể dục thể thao|sports;Marketing|business;Quản trị kinh doanh|business;Kinh doanh quốc tế|business;Logistics và quản lý chuỗi cung ứng|business'],
+  ['DHV','Trường Đại học Hùng Vương Thành phố Hồ Chí Minh','private','https://dhv.edu.vn/dao-tao/',
+    'Ngôn ngữ, du lịch, luật và quản lý bệnh viện.',
+    'Ngành/hướng học chọn lọc từ trang đào tạo; mã và chương trình chính quy cần xem chi tiết tại khoa.',
+    'Ngôn ngữ Anh|language;Ngôn ngữ Nhật|language;Ngôn ngữ Trung Quốc|language;Ngôn ngữ Hàn Quốc|language;Quản trị khách sạn|tourism;Quản trị dịch vụ du lịch và lữ hành|tourism;Luật|law;Luật kinh tế|law;Quản lý bệnh viện|health;Tâm lý học|social;Công nghệ thông tin|it;Kỹ thuật máy tính|engineering'],
+  ['HCMCONS','Nhạc viện Thành phố Hồ Chí Minh','public','https://hcmcons.vn/tin-tuc/khoa-thanh-nhac-267.html',
+    'Đào tạo âm nhạc chuyên nghiệp và nghệ thuật biểu diễn.',
+    'Hiện chọn Thanh nhạc theo trang khoa; có tuyển sinh đại học riêng và yêu cầu thi năng khiếu, không đồng nhất lớp năng khiếu ngắn hạn với chương trình đại học.',
+    'Thanh nhạc|media'],
+  ['SKDA','Trường Đại học Sân khấu – Điện ảnh Thành phố Hồ Chí Minh','public','https://skdahcm.edu.vn/',
+    'Diễn xuất, đạo diễn, quay phim, nhiếp ảnh và thiết kế mỹ thuật.',
+    'Ngành/chương trình theo mục Ngành học của trường; cần thi năng khiếu và đối chiếu ngành thực tế mở tuyển từng đợt.',
+    'Diễn viên kịch, điện ảnh – truyền hình|media;Đạo diễn điện ảnh – truyền hình|media;Đạo diễn sân khấu|media;Quay phim|media;Diễn viên sân khấu kịch hát|media;Nhiếp ảnh|media;Thiết kế mỹ thuật sân khấu, điện ảnh|media'],
+  ['FTU2','Phân hiệu Trường Đại học Ngoại thương tại TP. Hồ Chí Minh','public','https://hcmc.ftu.edu.vn/',
+    'Kinh doanh quốc tế, marketing, logistics và phân tích kinh doanh.',
+    'Phân hiệu, không phải trường độc lập. Đợt này chọn 3 chương trình liên kết quốc tế được nêu trên cổng phân hiệu; không gán học phí hay điểm của chương trình tiêu chuẩn.',
+    'Quản trị kinh doanh – Phân tích kinh doanh (Bedfordshire)|business;Quản trị Marketing (Northampton)|business;Logistics và Quản lý chuỗi cung ứng (Curtin)|business'],
+  ['RMIT-SGS','Đại học RMIT Việt Nam – Cơ sở Nam Sài Gòn','private','https://www.rmit.edu.vn/vi/hoc-tap-tai-rmit/chuong-trinh-cu-nhan',
+    'Đào tạo quốc tế về thiết kế, truyền thông, công nghệ và kinh doanh.',
+    'Cơ sở Nam Sài Gòn, không phải trường độc lập. Chọn chương trình từ danh mục cử nhân; xác nhận địa điểm giảng dạy và kỳ nhập học ở từng trang chương trình. Không tách chuyên ngành Kinh doanh thành ngành mới.',
+    'Kinh doanh|business;Digital Marketing|business;Thiết kế (Truyền thông số)|media;Thiết kế ứng dụng sáng tạo|media;Sản xuất phim kỹ thuật số|media;Thiết kế game|media;Truyền thông chuyên nghiệp|media;Quản trị doanh nghiệp thời trang|business;Tâm lý học|social;Công nghệ thông tin|it;Kỹ thuật phần mềm|it;Kỹ thuật điện tử và hệ thống máy tính|engineering;Kỹ thuật robot và cơ điện tử|engineering;Công nghệ thực phẩm và Dinh dưỡng|bio;Quốc tế học|language;Quản trị du lịch và khách sạn|tourism'],
+  ['FPT-HCM','Trường Đại học FPT – Phân hiệu tại TP. Hồ Chí Minh','private','https://daihoc.fpt.edu.vn/chuong-trinh-dao-tao/',
+    'Công nghệ, khởi nghiệp, truyền thông và kinh doanh.',
+    'Cơ sở tại khu công nghệ cao, không phải trường độc lập. Chọn ngành cấp trường; cần xác nhận danh mục mở tuyển riêng tại TP.HCM. Không tách hướng chuyên ngành thành mã ngành.',
+    'Công nghệ thông tin|it;Quản trị kinh doanh|business;Công nghệ truyền thông|media'],
+  ['EIU','Trường Đại học Quốc tế Miền Đông','private','https://eiu.edu.vn/hoc-tap/chuong-trinh-cu-nhan/',
+    'Điều dưỡng, kỹ thuật, công nghệ và quản trị.',
+    'Tại phường Bình Dương, TP.HCM (khu vực Bình Dương cũ). Danh mục cử nhân trên trang trường.',
+    'Điều dưỡng|health;Quản trị kinh doanh|business;Kinh tế|business;Mạng máy tính và truyền thông dữ liệu|it;Kỹ thuật phần mềm|it;Kỹ thuật điện tử – viễn thông|engineering;Kỹ thuật cơ điện tử|engineering;Kỹ thuật điều khiển và tự động hóa|engineering;Kỹ thuật cơ khí|engineering;Kỹ thuật điện|engineering'],
+  ['BETU','Trường Đại học Kinh tế – Kỹ thuật Bình Dương','private','https://www.ktkt.edu.vn/',
+    'Dược học, kỹ thuật, ngôn ngữ và dịch vụ.',
+    'Khu vực Bình Dương cũ, nay thuộc TP.HCM. Ngành chọn lọc từ danh mục của trường.',
+    'Dược học|health;Ngôn ngữ Anh|language;Ngôn ngữ Hàn Quốc|language;Ngôn ngữ Trung Quốc|language;Quan hệ công chúng|media;Truyền thông đa phương tiện|media;Quản trị nhà hàng và dịch vụ ăn uống|tourism;Luật|law;Luật kinh tế|law;Công nghệ kỹ thuật ô tô|engineering;Công nghệ kỹ thuật điện, điện tử|engineering;Kỹ thuật phần mềm|it'],
+  ['BVU','Trường Đại học Bà Rịa – Vũng Tàu','private','https://bvu.edu.vn/nganh-hoc-bvu/',
+    'Sức khỏe, du lịch, ngôn ngữ, logistics và công nghệ.',
+    'Khu vực Bà Rịa – Vũng Tàu cũ, nay thuộc TP.HCM. Chọn ngành đại học chính quy, không gồm sau đại học và liên thông.',
+    'Dược học|health;Điều dưỡng|health;Tâm lý học|social;Đông phương học|language;Ngôn ngữ Anh|language;Ngôn ngữ Trung Quốc|language;Quản trị dịch vụ du lịch và lữ hành|tourism;Quản trị khách sạn|tourism;Khai thác vận tải|business;Kinh tế vận tải|business;Logistics và quản lý chuỗi cung ứng|business;Công nghệ kỹ thuật cơ khí|engineering;Công nghệ kỹ thuật công trình xây dựng|engineering;Công nghệ kỹ thuật ô tô|engineering;Công nghệ thông tin|it;Luật|law'],
+  ['PVU','Trường Đại học Dầu khí Việt Nam','public','https://pvu.edu.vn/',
+    'Kỹ thuật dầu khí, hóa học và địa chất.',
+    'Tại phường Bà Rịa, TP.HCM (Bà Rịa – Vũng Tàu cũ). Chọn 3 ngành được giới thiệu tại Khoa Dầu khí; không gộp hệ liên kết quốc tế.',
+    'Kỹ thuật dầu khí|engineering;Kỹ thuật hóa học|engineering;Kỹ thuật địa chất|engineering'],
+  ['TDNU','Trường Đại học Trần Đại Nghĩa','public','https://tdnu.edu.vn/tin-tuc/truong-si-quan-ky-thuat-quan-su-truong-dh-tran-dai-nghia-xet-tuyen-dot-2-dai-hoc-dan-su.html',
+    'Cơ khí và ô tô, chương trình đại học hệ dân sự.',
+    'Chỉ nhập 2 ngành hệ dân sự trong thông báo xét tuyển bổ sung 2026; không gộp hệ quân sự. Mức nhận hồ sơ trong thông báo không phải điểm chuẩn.',
+    'Công nghệ kỹ thuật cơ khí|engineering;Công nghệ kỹ thuật ô tô|engineering'],
+  ['ANND','Trường Đại học An ninh nhân dân','public','https://dhannd.bocongan.gov.vn/tuyensinh',
+    'Đào tạo nghiệp vụ an ninh và bảo vệ an ninh quốc gia.',
+    'Trường thuộc Bộ Công an tại Linh Xuân. Chưa trích xuất được danh mục ngành từ tài liệu đính kèm; mục nghiệp vụ chỉ để khám phá lĩnh vực, cần xác nhận mã/ngành và điều kiện sơ tuyển, sức khỏe, đối tượng tuyển sinh tại cổng trường.',
+    'Nghiệp vụ an ninh|law'],
+  ['HVC','Học viện Cán bộ Thành phố Hồ Chí Minh','public','http://tuyensinh.hcmca.edu.vn/',
+    'Luật, quản lý nhà nước, chính trị học và công tác xã hội.',
+    '5 ngành trên cổng tuyển sinh tại 324 Chu Văn An; cổng nguồn hiện chỉ phục vụ HTTP.',
+    'Luật|law;Quản lý nhà nước|social;Xây dựng Đảng và chính quyền nhà nước|social;Chính trị học|social;Công tác xã hội|social'],
+  ['VYA-HCM','Phân hiệu Học viện Thanh thiếu niên Việt Nam tại TP. Hồ Chí Minh','public','https://tuyensinh.vya.edu.vn/thong-bao-tuyen-sinh-2026-vya',
+    'Công tác thanh thiếu niên và phát triển cộng đồng.',
+    'Phân hiệu mã HTH tại 261 Hoàng Hữu Nam, không phải trường độc lập. Trang thông báo toàn Học viện xác nhận địa điểm; danh mục riêng của phân hiệu chưa truy cập đầy đủ, chỉ chọn lĩnh vực Công tác thanh thiếu niên để tham khảo. Không gán cả 9 ngành ở Hà Nội cho phân hiệu.',
+    'Công tác thanh thiếu niên|social'],
+];
+
+export const hcmExpansionUniversities = schools.map(([id,name,institutionType,url,description,coverage]) => ({
+  id,name,code:id==='HVC'?'HVC':id==='VYA-HCM'?'HTH':null,
+  province:'TP. Hồ Chí Minh',website:url,description,coverage,
+  source:{url,title:`${name} — thông tin đào tạo và tuyển sinh`,kind:'official',checkedAt},
+  system:'Trường TP.HCM mở rộng',institutionType,region:'Miền Nam',
+}));
+
+export const hcmExpansionMajors = schools.flatMap(([school,,,,,,rows]) => {
+  const university = hcmExpansionUniversities.find(u => u.id === school);
+  return rows.split(';').map((line,index) => {
+    const [name,field] = line.split('|');
+    if (!fields[field]) throw new Error(`Unknown field for ${school}: ${line}`);
+    return {
+      id:`${school}-${String(index+1).padStart(3,'0')}`,universityId:school,name,code:null,field,
+      holland:fields[field].holland,description:fields[field].description,careers:fields[field].careers,
+      editorial:true,program:school==='FTU2'?'Chương trình liên kết quốc tế · xem nguồn':school==='TDNU'?'Đại học chính quy hệ dân sự':'Ngành/chương trình chọn lọc · xem nguồn và phạm vi tại trường',
+      admissionYear:null,tuition:null,combinations:[],cutoff:null,admissionScores:[],
+      source:university.source,verified:!['ANND','VYA-HCM','FPT-HCM','RMIT-SGS'].includes(school),
+      admissionsNote:university.coverage,
+    };
+  });
+});

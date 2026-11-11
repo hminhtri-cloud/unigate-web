@@ -2,6 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { questions } from '../data/questions.mjs';
 import { majors,universities } from '../data/catalog.mjs';
+import { hcmExpansionUniversities, hcmExpansionMajors } from '../data/hcm-expansion.mjs';
+import { hcmColleges, hcmCollegeMajors } from '../data/hcm-colleges.mjs';
+import { ctuCombinations } from '../data/ctu-combinations.mjs';
+import { recheckedAdmissionSources } from '../data/admissions-recheck-2026.mjs';
 import { calculateResult,combinationScores,interestFit,groups,fields,combinations,majorChoices,majorChoiceKey,matchesSchoolFilter,matchesSelectedMajor,sortMatchingSchools,sortCatalogMajors,thptSortingScore,compositeSortingScore,admissionGroup,comparableAnnualTuition,matchesHolland } from '../shared/domain.mjs';
 test('60 unique questions, 10 per RIASEC group; strong I/R profile is scored correctly',()=>{
   assert.equal(questions.length,60);assert.equal(new Set(questions.map(q=>q.content)).size,60);
@@ -23,16 +27,29 @@ test('zero score is valid, incomplete combinations are excluded, totals are roun
   assert.deepEqual(combinationScores({math:10,physics:10}),[]);
 });
 test('catalog integrity: independent IDs, source provenance, non-invented missing statistics',()=>{
-  assert.equal(universities.length,55);assert.equal(majors.length,888);assert.equal(new Set(majors.map(m=>m.id)).size,majors.length);
+  assert.equal(universities.length,99);assert.equal(majors.length,1262);assert.equal(new Set(majors.map(m=>m.id)).size,majors.length);
+  assert.equal(new Set(universities.map(u=>u.id)).size,universities.length);
+  assert.equal(hcmExpansionUniversities.length,20);
+  assert.ok(hcmExpansionUniversities.every(u=>matchesSchoolFilter(u,'area:hcm')));
+  assert.ok(new Set(hcmExpansionMajors.map(m=>m.field)).size>=12);
+  assert.ok(hcmExpansionMajors.every(m=>m.tuition===null&&m.cutoff===null&&m.admissionScores.every(s=>s.scoreType==='cutoff'&&s.source)));
+  assert.ok(hcmExpansionMajors.filter(m=>['RMIT-SGS','FPT-HCM','VYA-HCM','ANND'].includes(m.universityId)).every(m=>!m.verified&&m.admissionsNote));
+  assert.equal(hcmColleges.length,24);
+  assert.ok(hcmColleges.every(u=>matchesSchoolFilter(u,'area:hcm')&&matchesSchoolFilter(u,'level:college')&&!matchesSchoolFilter(u,'level:university')));
+  assert.ok(hcmExpansionUniversities.every(u=>matchesSchoolFilter(u,'level:university')&&!matchesSchoolFilter(u,'level:college')));
+  assert.ok(new Set(hcmCollegeMajors.map(m=>m.field)).size>=10);
+  assert.ok(hcmCollegeMajors.every(m=>m.educationLevel==='college'&&m.program.startsWith('Cao đẳng')&&(m.tuition===null||m.universityId==='DLSG'&&m.tuition.source.startsWith('https://dulichsaigon.edu.vn/'))&&m.cutoff===null&&m.admissionScores.every(s=>s.scoreType==='cutoff'&&s.source)));
+  assert.equal(majors.find(m=>m.id==='NCEHCM-001').name,'Giáo dục mầm non');
+  assert.ok(!hcmCollegeMajors.some(m=>m.universityId==='CTC3'&&['Thiết kế đồ họa','Thiết kế nội thất'].includes(m.name)));
   assert.equal(universities.filter(u=>u.system==='ĐHQG-HCM').length,8);
   assert.equal(universities.filter(u=>u.system==='Trường tại TP.HCM'&&u.province==='TP. Hồ Chí Minh').length,26);
-  assert.equal(universities.filter(u=>u.institutionType==='public').length,45);
-  assert.equal(universities.filter(u=>u.institutionType==='private').length,10);
+  assert.equal(universities.filter(u=>u.institutionType==='public').length,69);
+  assert.equal(universities.filter(u=>u.institutionType==='private').length,30);
   assert.equal(universities.filter(u=>u.system==='Trường miền Nam khác').length,10);
   assert.equal(universities.filter(u=>u.system==='Trường miền Nam mở rộng').length,10);
   assert.equal(majors.filter(m=>m.universityId==='VNUF2').length,15);
   assert.equal(majors.find(m=>m.id==='HSU-017').field,'law');
-  assert.ok(majors.filter(m=>m.universityId==='VLU').every(m=>m.admissionScores.length===0));
+  assert.ok(majors.filter(m=>m.universityId==='VLU'&&m.admissionScores.length).every(m=>!m.admissionScores.some(s=>s.method==='dgnl')));
   assert.equal(matchesSchoolFilter(universities.find(u=>u.id==='HSU'),'area:hcm'),true);
   assert.equal(matchesSchoolFilter(universities.find(u=>u.id==='VNUF2'),'area:hcm'),false);
   assert.equal(matchesSchoolFilter(universities.find(u=>u.id==='BDU'),'area:hcm'),true);
@@ -41,15 +58,15 @@ test('catalog integrity: independent IDs, source provenance, non-invented missin
   assert.equal(majors.find(m=>m.id==='DTHU-7480208').admissionScores[0].value,16.45);
   assert.equal(majors.find(m=>m.id==='DTHU-7420101').admissionScores[1].scale,1200);
   assert.equal(majors.find(m=>m.id==='DTHU-7140209').admissionScores.length,0);
-  assert.deepEqual(universities.filter(u=>u.institutionType==='private').map(u=>u.id),['HUTECH','HSU','NTTU','LHU','HIU','UEF','BDU','VLU','GDU','MKU']);
+  assert.deepEqual(universities.filter(u=>u.institutionType==='private'&&u.educationLevel!=='college'&&!hcmExpansionUniversities.some(n=>n.id===u.id)).map(u=>u.id),['HUTECH','HSU','NTTU','LHU','HIU','UEF','BDU','VLU','GDU','MKU']);
   for(const u of universities)assert.ok(majors.some(m=>m.universityId===u.id),`${u.id} cần có ngành thực tế`);
   for(const m of majors.filter(m=>m.universityId==='UEH'))assert.equal(m.tuition,null);
-  for(const m of majors){assert.ok(universities.some(u=>u.id===m.universityId));assert.ok(fields[m.field]);assert.ok(/^https:\/\//.test(m.source.url));assert.match(m.holland,/^[RIASEC]{3}$/);for(const c of m.combinations)assert.ok(combinations[c]);}
+  for(const m of majors){assert.ok(universities.some(u=>u.id===m.universityId));assert.ok(fields[m.field]);assert.ok(/^https:\/\//.test(m.source.url)||m.universityId==='HVC'&&m.source.url==='http://tuyensinh.hcmca.edu.vn/');assert.match(m.holland,/^[RIASEC]{3}$/);for(const c of m.combinations)assert.match(c,/^[A-Z][A-Z0-9]{2}$/);}
   assert.equal(majors.filter(m=>m.universityId==='HCMUS').length,39);
   assert.equal(majors.filter(m=>m.universityId==='AGU'&&m.source.kind==='secondary'&&!m.verified).length,43);
   assert.ok(majors.filter(m=>m.universityId==='HCMUT').every(m=>m.cutoff.scale===100&&m.cutoff.method==='Xét tuyển tổng hợp'));
   assert.ok(majors.filter(m=>m.universityId==='UIT').every(m=>m.tuition?.value===42_000_000&&m.tuition.approximate&&m.cutoff===null));
-  assert.equal(majors.filter(m=>m.admissionScores.length).length,326);
+  assert.equal(majors.filter(m=>m.admissionScores.length).length,729);
   assert.equal(majors.filter(m=>m.universityId==='CTU').length,127);
   assert.ok(majors.filter(m=>m.universityId==='CTU').every(m=>m.admissionScores.length===1&&m.tuition?.source&&m.tuition.value>0));
   assert.equal(majors.find(m=>m.id==='CTU-7480201').admissionScores[0].value,23.73);
@@ -59,7 +76,7 @@ test('catalog integrity: independent IDs, source provenance, non-invented missin
   assert.equal(majors.find(m=>m.id==='CTU-7340101C').admissionScores[0].value,20.01);
   assert.equal(majors.find(m=>m.id==='HUTECH-001').tuition.period,'đợt');
   assert.equal(majors.find(m=>m.id==='HUTECH-001').tuition.value,16_500_000);
-  assert.equal(majors.filter(m=>m.tuition).length,324);
+  assert.equal(majors.filter(m=>m.tuition).length,353);
   assert.equal(majors.find(m=>m.id==='SGU-7380101').tuition.period,'toàn khóa');
   assert.equal(majors.find(m=>m.id==='SGU-7380101').tuition.value,132_732_600);
   assert.equal(comparableAnnualTuition(majors.find(m=>m.id==='SGU-7380101')),null);
@@ -73,7 +90,7 @@ test('catalog integrity: independent IDs, source provenance, non-invented missin
   assert.equal(majors.find(m=>m.id==='UMP-008').tuition.value,48_000_000);
   assert.equal(majors.find(m=>m.id==='UAH-001').tuition.value,1_140_000);
   assert.equal(majors.find(m=>m.id==='UAH-001').tuition.period,'tín chỉ');
-  assert.equal(comparableAnnualTuition(majors.find(m=>m.id==='UAH-001')),null);
+  assert.equal(comparableAnnualTuition(majors.find(m=>m.id==='UAH-001')),35_568_000);
   assert.equal(majors.find(m=>m.id==='HCMUT-106').tuition.value,15_750_000);
   assert.equal(majors.find(m=>m.id==='HCMUT-106').tuition.approximate,true);
   assert.equal(comparableAnnualTuition(majors.find(m=>m.id==='HCMUT-106')),null);
@@ -87,16 +104,99 @@ test('catalog integrity: independent IDs, source provenance, non-invented missin
   assert.equal(majors.find(m=>m.id==='NLU-007').name,'Lâm học');
   assert.equal(majors.find(m=>m.id==='NLU-007').code,'7620201');
   assert.deepEqual(majors.find(m=>m.id==='NLU-007').admissionScores.map(s=>s.value),[19.7,635]);
-  assert.equal(majors.filter(m=>admissionGroup(m)==='thpt').length,204);
-  assert.equal(majors.filter(m=>admissionGroup(m)==='composite').length,122);
-  assert.equal(majors.filter(m=>admissionGroup(m)==='unverified').length,562);
+  assert.equal(majors.filter(m=>admissionGroup(m)==='thpt').length,519);
+  assert.equal(majors.filter(m=>admissionGroup(m)==='composite').length,185);
+  assert.equal(majors.filter(m=>admissionGroup(m)==='unverified').length,558);
   assert.equal(majors.find(m=>m.id==='PTIT-HCM-7480201').admissionScores[0].value,17);
   assert.equal(majors.find(m=>m.id==='PTIT-HCM-7480201').admissionScores[1].value,611.33);
   assert.equal(majors.find(m=>m.id==='SGU-7380101').admissionScores[0].method,'thpt-equivalent');
   assert.equal(admissionGroup(majors.find(m=>m.id==='HCMUS-7420201')),'composite');
   assert.equal(admissionGroup(majors.find(m=>m.id==='UAH-001')),'thpt');
-  assert.ok(majors.flatMap(m=>m.admissionScores).every(s=>s.year===2026&&s.value>=0&&s.value<=s.scale&&/^https:\/\//.test(s.source)));
+  assert.ok(majors.flatMap(m=>m.admissionScores).every(s=>s.year===2026&&Number.isFinite(s.value)&&s.value>=0&&(s.scale===null||s.value<=s.scale)&&/^https:\/\//.test(s.source)));
   assert.ok(majors.filter(m=>m.universityId==='HCMUT').every(m=>thptSortingScore(m)===null));
+});
+test('2026 supplements keep method, combination, weighting and programme boundaries',()=>{
+  const get=id=>majors.find(m=>m.id===id);
+  const chemistry=get('HCMUNRE-7510401');
+  assert.equal(chemistry.admissionScores.find(s=>s.method==='thpt').value,18);
+  assert.equal(chemistry.admissionScores.find(s=>s.method==='transcript'&&s.combinations.includes('B03')).value,22);
+  assert.equal(chemistry.admissionScores.find(s=>s.method==='transcript'&&s.combinations.includes('X04')).value,23.5);
+  assert.equal(chemistry.admissionScores.find(s=>s.method==='dgnl').value,664);
+  assert.ok(chemistry.admissionScores.every(s=>s.scoreType==='cutoff'));
+  assert.equal(get('HCMUNRE-7440221').code,'7440211');
+  const logistics=get('HCMUNRE-7510605');
+  assert.ok(logistics.combinations.includes('X03'));
+  assert.ok(logistics.admissionScores.some(s=>s.method==='transcript'&&s.combinations.includes('X04')));
+  assert.ok(!logistics.admissionScores.some(s=>s.method==='transcript'&&s.combinations.includes('X03')));
+  assert.equal(get('BDU-003').admissionScores.some(s=>s.method==='dgnl'),false);
+  assert.equal(get('STU-004').admissionScores.length,0); // Graphical vs Industrial Design is not interchangeable.
+  assert.equal(get('HSU-018').admissionScores.length,0); // International commercial law != International law.
+  assert.equal(get('UEF-016').admissionScores.find(s=>s.method==='thpt').value,20);
+  assert.equal(get('UEF-001').admissionScores.find(s=>s.method==='thpt').value,15);
+  assert.ok(get('UEF-023').combinations.includes('X79'));
+  assert.ok(!get('UEF-023').combinations.includes('X01'));
+  assert.equal(get('VLU-015').admissionScores.find(s=>s.method==='thpt').value,15); // Not Global Elite 20.
+  assert.ok(get('VLU-015').admissionScores.some(s=>s.method==='combined-vact'));
+  assert.ok(!get('VLU-015').admissionScores.some(s=>s.method==='dgnl'));
+  assert.equal(get('CTTC-001').admissionScores.find(s=>s.method==='thpt-weighted').value,32);
+  assert.equal(thptSortingScore(get('CTTC-001')).value,24);
+  assert.equal(thptSortingScore(get('NCEHCM-001')),null); // One academic subject + two aptitude tests.
+  assert.equal(get('NCEHCM-001').admissionScores[0].value,22.51);
+  assert.equal(get('PVU-001').admissionScores.find(s=>s.method==='thpt').value,22.5); // Not linked programme 19.
+  assert.deepEqual(get('UMP-001').admissionScores[0].combinations,['B00']);
+  assert.equal(Object.keys(ctuCombinations).length,127);
+  assert.ok(get('CTU-7480201').combinations.includes('X26'));
+  assert.ok(!get('CTU-7480201').admissionMethods.find(m=>m.method==='vsat').combinations.includes('X26'));
+  assert.ok(get('CTU-7140201').combinations.includes('M01'));
+  assert.equal(get('CTU-7480201').admissionScores[0].method,'thpt-equivalent');
+  assert.equal(get('TDTU-001').admissionScores.find(s=>s.method==='composite').value,69.7);
+  assert.equal(thptSortingScore(get('TDTU-001')),null);
+  assert.ok(get('TDTU-001').admissionScores[0].combinationExpression.includes('Tổ hợp gốc'));
+  assert.equal(thptSortingScore({admissionScores:[{method:'thpt',year:2026,scale:30,value:15,scoreType:'floor'}]}),null);
+});
+test('source recheck separates published points, applicant groups and unavailable programme matches',()=>{
+  const get=id=>majors.find(m=>m.id===id);
+  const ussh=get('USSH-7140101');
+  assert.deepEqual(ussh.admissionScores.map(s=>[s.applicantGroup,s.value]),[['DT01',75.5],['DT02',76.2],['DT03',75.5]]);
+  assert.equal(compositeSortingScore(ussh),null);
+  assert.equal(compositeSortingScore({...ussh,admissionScores:ussh.admissionScores.filter(s=>s.applicantGroup==='DT02')}).value,76.2);
+  assert.equal(thptSortingScore(ussh),null);
+  assert.ok(majors.filter(m=>m.universityId==='USSH').every(m=>m.admissionScores.length===3&&m.admissionScores.every(s=>s.method==='composite'&&s.scale===100)));
+  assert.equal(get('USSH-73106A1').admissionScores[0].value,76.9);
+  assert.equal(get('UHS-001').admissionScores[0].value,82.6);
+  assert.equal(get('UHS-002').admissionScores[0].value,72.41);
+  assert.ok(get('UHS-001').admissionScores[0].source.endsWith('/preview'));
+  assert.equal(get('HCMUE-001').admissionScores.find(s=>s.method==='thpt').value,29.49);
+  assert.deepEqual(get('HCMUE-001').admissionScores[0].combinations,['A00']);
+  assert.ok(get('HCMUE-001').admissionScores[1].combinationExpression.includes('A00TO'));
+  assert.equal(get('IUH-001').admissionScores[0].value,25);
+  assert.equal(thptSortingScore(get('IUH-001')),null);
+  assert.ok(get('IUH-001').admissionScores.every(s=>s.method==='combined'));
+  assert.equal(get('NTTU-001').admissionScores.find(s=>s.method==='dgnl').value,650);
+  assert.equal(get('NTTU-002').admissionScores.find(s=>s.method==='dgnl').value,600);
+  assert.equal(get('NTTU-012').admissionScores.some(s=>s.method==='dgnl'),false);
+  assert.equal(get('NTTU-016').admissionScores.length,0);
+  assert.ok(get('NTTU-016').admissionMissingReason.includes('Tài chính'));
+  assert.equal(get('UMT-003').admissionScores.length,0);
+  const umt=get('UMT-001');
+  assert.equal(umt.admissionScores.find(s=>s.method==='dgnl-equivalent').value,15);
+  assert.equal(umt.admissionScores.find(s=>s.method==='dgnl-equivalent').scale,30);
+  assert.ok(!umt.admissionScores.some(s=>s.method==='dgnl'||s.method==='sat'));
+  assert.equal(umt.admissionScores.find(s=>s.method==='vsat').scale,450);
+  assert.ok(get('HUFLIT-004').combinations.includes('DD2'));
+  assert.equal(get('HUFLIT-009').admissionScores.find(s=>s.method==='thpt').value,20);
+  assert.equal(get('HUFLIT-013').admissionScores.find(s=>s.method==='transcript').value,19.5);
+  assert.equal(get('EIU-001').admissionScores.find(s=>s.method==='dgnl').value,667);
+  assert.ok(!get('EIU-001').combinations.includes('X06'));
+  assert.ok(get('EIU-005').combinations.includes('X06'));
+  assert.equal(get('GDU-005').admissionScores.find(s=>s.method==='transcript').value,20);
+  assert.equal(get('BVU-001').admissionScores.find(s=>s.method==='transcript').value,20);
+  assert.equal(Object.keys(recheckedAdmissionSources).length,10);
+  for(const school of universities.filter(u=>u.admissionsReview)){
+    assert.equal(school.admissionsReview.status,'published');
+    assert.ok(school.admissionsReview.announcement&&school.admissionsReview.socialReview);
+    if(school.admissionsReview.facebook)assert.ok(school.admissionsReview.channelVerification);
+  }
 });
 test('annual tuition sort keeps per-credit, installment and older cohort figures after comparable annual amounts',()=>{
   const ids=['UAH-001','CTU-7480201','HUTECH-001','UFM-001','UIT-001','USSH-7320101'];

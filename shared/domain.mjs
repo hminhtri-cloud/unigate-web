@@ -1,3 +1,4 @@
+import {estimatedAnnualTuition} from './programme-facts.mjs';
 export const groups = {
   R: {
     name: "Thực tế",
@@ -226,6 +227,13 @@ export const subjects = {
   informatics: "Tin học",
   technology: "Công nghệ công nghiệp",
   agriculture: "Công nghệ nông nghiệp",
+  economicsLaw: "Giáo dục kinh tế và pháp luật",
+  russian: "Tiếng Nga",
+  french: "Tiếng Pháp",
+  chinese: "Tiếng Trung Quốc",
+  german: "Tiếng Đức",
+  japanese: "Tiếng Nhật",
+  korean: "Tiếng Hàn Quốc",
 };
 export const combinations = {
   A00: ["math", "physics", "chemistry"],
@@ -240,13 +248,31 @@ export const combinations = {
   C00: ["literature", "history", "geography"],
   C01: ["math", "literature", "physics"],
   C02: ["math", "literature", "chemistry"],
+  C03: ["math", "literature", "history"],
   C04: ["math", "literature", "geography"],
+  C05: ["literature", "physics", "chemistry"],
+  C06: ["literature", "physics", "biology"],
+  C08: ["literature", "chemistry", "biology"],
   D01: ["math", "literature", "english"],
+  D02: ["math", "literature", "russian"],
+  D03: ["math", "literature", "french"],
+  D04: ["math", "literature", "chinese"],
+  D05: ["math", "literature", "german"],
+  D06: ["math", "literature", "japanese"],
+  DD2: ["math", "literature", "korean"],
   D07: ["math", "chemistry", "english"],
   D10: ["math", "geography", "english"],
+  D09: ["math", "history", "english"],
+  D11: ["literature", "physics", "english"],
   D14: ["literature", "history", "english"],
   D15: ["literature", "geography", "english"],
   X06: ["math", "physics", "informatics"],
+  X01: ["math", "literature", "economicsLaw"],
+  X02: ["math", "literature", "informatics"],
+  X03: ["math", "literature", "technology"],
+  X04: ["math", "literature", "agriculture"],
+  X70: ["literature", "history", "economicsLaw"],
+  X74: ["literature", "geography", "economicsLaw"],
   X10: ["math", "chemistry", "informatics"],
   X11: ["math", "chemistry", "technology"],
   X12: ["math", "chemistry", "agriculture"],
@@ -317,20 +343,24 @@ export function thptSortingScore(major) {
         score.year === 2026 &&
         score.scale === 30 &&
         ["thpt", "thpt-equivalent"].includes(score.method) &&
+        (!score.scoreType || score.scoreType === 'cutoff') &&
         Number.isFinite(score.value),
     ) ?? null
   );
 }
 export function compositeSortingScore(major) {
-  return (
-    major.admissionScores?.find(
+  const scores = major.admissionScores?.filter(
       (score) =>
         score.year === 2026 &&
         score.scale === 100 &&
         score.method === "composite" &&
+        (!score.scoreType || score.scoreType === 'cutoff') &&
         Number.isFinite(score.value),
-    ) ?? null
-  );
+    ) || [];
+  // Do not silently pick DT01 when a school publishes different applicant groups.
+  // The lookup filter can narrow the rows to the requested group before sorting.
+  if(scores.some(score=>score.applicantGroup)&&new Set(scores.map(score=>score.value)).size>1)return null;
+  return scores[0] ?? null;
 }
 export function admissionGroup(major) {
   // A /30 equivalence published for the SAME composite method (HCMUS) is not a separate THPT route.
@@ -345,6 +375,8 @@ export function admissionGroup(major) {
 }
 export function comparableAnnualTuition(major) {
   const tuition = major.tuition;
+  const estimate=estimatedAnnualTuition(major);
+  if(estimate)return estimate.max;
   return tuition &&
     ["năm", "năm học"].includes(tuition.period) &&
     !tuition.approximate &&
@@ -353,17 +385,71 @@ export function comparableAnnualTuition(major) {
     ? tuition.value
     : null;
 }
+export function partitionByAnnualTuition(majors,budget) {
+  if(budget==null||budget==='')return {matching:majors,unknown:[],overBudget:[]};
+  const result={matching:[],unknown:[],overBudget:[]},limit=Number(budget)*1_000_000;
+  for(const major of majors){
+    const annual=comparableAnnualTuition(major);
+    if(annual===null)result.unknown.push(major);
+    else if(annual<=limit)result.matching.push(major);
+    else result.overBudget.push(major);
+  }
+  return result;
+}
 export function matchesSchoolFilter(school,filter) {
   if(!filter)return true;
-  if(filter==='area:hcm')return school.province==='TP. Hồ Chí Minh';
+  if(typeof filter==='object')return ['area','level','type','system'].every(key=>{
+    const values=schoolFilterValues(filter[key]);
+    return !values.length||values.some(value=>matchesSchoolFilter(school,`${key}:${value}`));
+  });
+  if(filter==='area:cantho')return school.province==='TP. Cần Thơ';
+  if(filter==='area:south')return ['TP. Hồ Chí Minh','TP. Cần Thơ','An Giang','Đồng Nai','Vĩnh Long','Đồng Tháp','Cà Mau','Tây Ninh'].includes(school.province);
+  if(filter.startsWith('area:'))return school.province===(filter.slice(5)==='hcm'?'TP. Hồ Chí Minh':filter.slice(5));
+  if(filter.startsWith('level:'))return (school.educationLevel||'university')===filter.slice(6);
   if(filter.startsWith('type:'))return school.institutionType===filter.slice(5);
+  if(filter==='system:vnu-hcm')return school.system==='ĐHQG-HCM';
+  if(filter==='system:ctu')return school.id==='CTU';
+  if(filter==='system:other')return school.system!=='ĐHQG-HCM'&&school.id!=='CTU';
+  if(filter.startsWith('system:'))return school.system===filter.slice(7);
   return school.system===filter;
+}
+export const schoolFilterValues=value=>Array.isArray(value)?value:value?[value]:[];
+export const emptySchoolFilters={area:'',level:'',type:'',system:''};
+export function schoolFiltersFromParams(params) {
+  const result={...emptySchoolFilters,area:params.get('area')||'',level:params.get('level')||'',type:params.get('type')||''};
+  const legacy=params.get('system')||'';
+  const key=['area','level','type'].find(key=>legacy.startsWith(`${key}:`));
+  if(key){if(!result[key])result[key]=legacy.slice(key.length+1);}else result.system=legacy;
+  return result;
 }
 export const admissionMethodLabel = {
   thpt: "THPT",
   "thpt-equivalent": "Quy đổi theo THPT",
   dgnl: "ĐGNL ĐHQG-HCM",
   composite: "Xét tuyển tổng hợp",
+  transcript: "Học bạ THPT",
+  'transcript-average': "Học bạ · trung bình năm học",
+  combined: "Xét tuyển kết hợp",
+  'dgnl-hn': "ĐGNL ĐHQG Hà Nội (HSA)",
+  'dgnl-special-hcmue': "ĐGNL chuyên biệt ĐHSP TP.HCM + học bạ",
+  tsa: "Đánh giá tư duy Bách khoa Hà Nội",
+  vsat: "V-SAT",
+  sat: "SAT",
+  ib: "IB",
+  gpa10: "GPA hệ 10",
+  gpa4: "GPA hệ 4",
+  interview: "Phỏng vấn",
+  talent: "Xét tuyển thẳng theo diện của trường",
+  'thpt-weighted': "THPT có trọng số",
+  'aptitude-thpt': "THPT kết hợp thi năng khiếu",
+  'aptitude-transcript': "Học bạ kết hợp thi năng khiếu",
+  'combined-vact': "Kết hợp học bạ + V-ACT",
+  'combined-hsa': "Kết hợp học bạ + HSA",
+  'combined-tsa': "Kết hợp học bạ + TSA",
+  'combined-vsat': "Kết hợp học bạ + V-SAT",
+  'combined-sat': "Kết hợp học bạ + SAT",
+  'dgnl-equivalent': "ĐGNL · điểm quy đổi do trường công bố",
+  'prior-qualification': "Trình độ tương đương · TC01",
 };
 export function matchesHolland(major, code) {
   // Editorial mapping: prioritize the strongest group and one more from the top three.

@@ -5,6 +5,7 @@
     "setup": "node scripts/setup.mjs",
     "db:up": "docker compose up -d --wait",
     "db:seed": "node server/seed.mjs",
+    "data:audit": "node scripts/audit-admissions.mjs",
     "dev": "concurrently -k -n api,web \"node --watch server/index.mjs\" \"vite --host 127.0.0.1\"",
     "build": "vite build",
     "start": "node server/index.mjs",
