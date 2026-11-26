@@ -27,7 +27,7 @@ const relayEnabled=source=>source.id==='MOET'&&process.env.NEWS_MOET_RELAY==='tr
 async function relayHtml(input,source){
   const endpoint=new URL('https://unigate-web.vercel.app/api/news-source');endpoint.searchParams.set('url',canonicalUrl(input));
   const response=await fetch(endpoint,{signal:AbortSignal.timeout(20000)});
-  if(!response.ok)throw new Error(`Project relay HTTP ${response.status}`);
+  if(!response.ok){const problem=await response.json().catch(()=>({}));throw new Error(`Project relay HTTP ${response.status}: ${problem.reason||problem.error||'unavailable'} (${problem.region||'unknown region'})`);}
   const text=await response.text();if(Buffer.byteLength(text)>maxBytes)throw new Error('Relay response too large');
   const data=JSON.parse(text);
   if(!allowedUrl(data.sourceUrl,source)||typeof data.html!=='string'||!data.retrievedAt||Number.isNaN(Date.parse(data.retrievedAt))||Date.now()-Date.parse(data.retrievedAt)>24*3600000)throw new Error('Unverified relay response');

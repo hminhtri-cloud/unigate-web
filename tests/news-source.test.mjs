@@ -24,5 +24,5 @@ test('relay rejects writes and untrusted redirects before requesting other hosts
 });
 test('relay reports failures without source cookies or internal errors',async()=>{
   const handler=createNewsSourceHandler(async()=>{throw new Error('sensitive internals');});
-  assert.deepEqual((await invoke(handler)).body,{error:'official_source_unavailable'});
+  const result=await invoke(handler);assert.equal(result.body.error,'official_source_unavailable');assert.equal(result.body.reason,'source_fetch_failed');assert.ok(!JSON.stringify(result.body).includes('sensitive internals'));
 });

@@ -27,7 +27,11 @@ export function createNewsSourceHandler(fetchPage=fetch){
         return send(200,{sourceUrl:url,retrievedAt:new Date().toISOString(),region:process.env.VERCEL_REGION||'local',html});
       }
       throw new Error('Too many redirects');
-    }catch{return send(502,{error:'official_source_unavailable'});}
+    }catch(error){
+      const code=error.cause?.code||error.code;
+      const publicCodes=['ETIMEDOUT','ENETUNREACH','ECONNREFUSED','ECONNRESET','CERT_HAS_EXPIRED','UNABLE_TO_VERIFY_LEAF_SIGNATURE','UNABLE_TO_GET_ISSUER_CERT_LOCALLY','UND_ERR_CONNECT_TIMEOUT'];
+      return send(502,{error:'official_source_unavailable',reason:publicCodes.includes(code)?code:'source_fetch_failed',region:process.env.VERCEL_REGION||'local'});
+    }
   };
 }
 export const newsSourceHandler=createNewsSourceHandler();
