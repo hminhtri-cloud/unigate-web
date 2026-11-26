@@ -17,6 +17,7 @@ const requested=values.sources?.trim()?values.sources.split(',').map(id=>id.trim
 if(requested?.some(id=>!newsSources.some(s=>s.id===id)))throw new Error('Unknown source ID');
 const sources=newsSources.filter(s=>!requested||requested.includes(s.id));
 const report={startedAt:now.toISOString(),admissionYear:document.admissionYear,mode:values.write?'write':'dry-run',lookbackDays:lookback,limitPerSource:limit,sources:[],events:[]};
+const errorText=error=>[error.message,error.cause?.code,error.cause?.message].filter(Boolean).join(' · ');
 let browserPromise;
 const maxBytes=3*1024*1024;
 async function httpHtml(input,source){
@@ -51,8 +52,11 @@ async function renderedPages(url,source,paginate=false){
       const request=route.request();
       return !allowedUrl(request.url(),source)||['image','font','media'].includes(request.resourceType())?route.abort():route.continue();
     });
-    const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:25000});
+    const response=await page.goto(url,{waitUntil:'commit',timeout:25000});
     if(!response?.ok()||!allowedUrl(page.url(),source))throw new Error('Rendered page failed official URL/status check');
+    // Slow assets must not discard an already successful article response.
+    await page.waitForLoadState('domcontentloaded',{timeout:8000}).catch(()=>{});
+    await page.locator('h1,article,.default-pagination').first().waitFor({state:'attached',timeout:6000}).catch(()=>{});
     await page.waitForTimeout(1200);
     const pages=[];
     for(let i=0;i<(paginate?6:1);i++){
@@ -86,7 +90,7 @@ async function collect(source){
       let pages;
       if(source.render){
         try{pages=await renderedPages(entry,source,source.id==='MOET');}
-        catch(error){result.errors.push({url:entry,error:error.message,fallback:'Retry as plain HTML'});pages=[await httpHtml(entry,source)];}
+        catch(error){result.errors.push({url:entry,error:errorText(error),fallback:'Retry as plain HTML'});pages=[await httpHtml(entry,source)];}
       }else pages=[await readPage(entry,source)];
       for(const page of pages){
         result.pagesRead++;
@@ -95,7 +99,7 @@ async function collect(source){
         if(parsed.article)incoming.push(parsed.article);
         for(const url of discoverLinks(page.html,page.url,source))links.add(url);
       }
-    }catch(error){result.errors.push({url:entry,error:error.message});}
+    }catch(error){result.errors.push({url:entry,error:errorText(error)});}
   }
   // New target-cycle headlines first, but do not infer publication dates from URLs.
   const candidates=[...links].sort((a,b)=>Number(b.includes(String(document.admissionYear)))-Number(a.includes(String(document.admissionYear)))).slice(0,limit);
@@ -110,7 +114,7 @@ async function collect(source){
         const [rendered]=await renderedPages(url,source);parsed=extractArticle(rendered.html,rendered.url,source,{year:document.admissionYear,now,notBefore});
       }
       if(parsed.article)incoming.push(parsed.article);else event(url,parsed.reason);
-    }catch(error){result.errors.push({url,error:error.message});}
+    }catch(error){result.errors.push({url,error:errorText(error)});}
   }
   result.verified=incoming.length;
   result.status=result.pagesRead||result.verified?(result.errors.length?'partial':'checked'):'failed';
