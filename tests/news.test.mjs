@@ -104,6 +104,10 @@ test('view counters do not change fingerprints; article image changes do',()=>{
   assert.notEqual(first.article.contentHash,image.article.contentHash);
 });
 
+test('alternative postgraduate and continuing-education wording stays outside student news',()=>{
+  for(const title of ['Danh sách thí sinh đăng ký xét tuyển cao học khóa 31 năm 2026','Thông báo tuyển sinh đại học hình thức thường xuyên năm 2026','Thông báo tuyển sinh hình thức đào tạo thường xuyên năm 2026'])assert.equal(relevantTitle(title),false);
+});
+
 test('configured schools only grant catalogue official hosts, never third-party score sites',async()=>{
   assert.equal(newsSources.length,100);
   assert.ok(newsSources.every(s=>s.hosts.length&&s.entries.every(url=>allowedUrl(url,s))));

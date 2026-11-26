@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "admissionYear": 2026,
-  "updatedAt": "2026-11-26T09:03:32.758Z",
+  "updatedAt": "2026-11-26T09:14:16.623Z",
   "articles": [
     {
       "id": "hce-5b70d2019e26edfd",
@@ -22,24 +22,6 @@
       "discoveredAt": "2026-11-26T08:51:54.880Z"
     },
     {
-      "id": "ush-c2f5a3a102e749a9",
-      "sourceId": "USH",
-      "sourceName": "Trường Đại học Thể dục Thể thao Thành phố Hồ Chí Minh",
-      "sourceKind": "school",
-      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
-      "admissionYear": 2026,
-      "date": "2026-11-15",
-      "title": "DANH SÁCH THÍ SINH ĐĂNG KÝ XÉT TUYỂN CAO HỌC KHÓA 31 ĐỢT 2 NĂM 2026",
-      "summary": "",
-      "summaryKind": "source-excerpt",
-      "url": "https://ush.edu.vn/thong-bao/danh-sach-thi-sinh-dang-ky-xet-tuyen-cao-hoc-khoa-31-dot-2-nam-2026-1816.html",
-      "category": "guidance",
-      "draft": false,
-      "contentHash": "486a4fd213c282316456b9f8e0e25b8291c1ad1d8b1de66840069cea6e8190f5",
-      "verifiedAt": "2026-11-26T09:03:32.758Z",
-      "discoveredAt": "2026-11-26T09:03:32.758Z"
-    },
-    {
       "id": "bvu-70ed0e278c9458d2",
       "sourceId": "BVU",
       "sourceName": "Trường Đại học Bà Rịa – Vũng Tàu",
@@ -56,24 +38,6 @@
       "contentHash": "dc549205fc6aa7becacef3d49f51986659d7d19962785246a0614d5fd9e462d0",
       "verifiedAt": "2026-11-26T08:51:54.880Z",
       "discoveredAt": "2026-11-26T08:45:14.493Z"
-    },
-    {
-      "id": "hcmue-c622bddca997fe0f",
-      "sourceId": "HCMUE",
-      "sourceName": "Trường Đại học Sư phạm Thành phố Hồ Chí Minh",
-      "sourceKind": "school",
-      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
-      "admissionYear": 2026,
-      "date": "2026-11-12",
-      "title": "Thông báo Về việc ngừng tuyển sinh các ngành đào tạo trình độ đại học và ngành Giáo dục Mầm non trình độ cao đẳng hình thức đào tạo thường xuyên năm 2026",
-      "summary": "Trường thông báo về việc ngừng tuyển sinh các ngành đào tạo trình độ đại học và ngành Giáo dục Mầm non trình độ cao đẳng hình thức đào tạo thường xuyên năm 2026",
-      "summaryKind": "source-excerpt",
-      "url": "https://hcmue.edu.vn/vi/tuyen-sinh/dai-hoc/3136-thong-bao-v-vi-c-ng-ng-tuy-n-sinh-cac-nganh-dao-t-o-trinh-d-d-i-h-c-va-nganh-giao-d-c-m-m-non-trinh-d-cao-d-ng-hinh-th-c-dao-t-o-thu-ng-xuyen-nam-2026",
-      "category": "guidance",
-      "draft": false,
-      "contentHash": "d4951cc3d6b4e0e1954381ab6ed4fcddc0ded9fe98ed252b8792170d1df07b63",
-      "verifiedAt": "2026-11-26T09:03:32.758Z",
-      "discoveredAt": "2026-11-26T09:03:32.758Z"
     },
     {
       "id": "tlus-bf3bd136931a61ad",
@@ -861,24 +825,6 @@
       "contentHash": "ed60f33dbf81bdcd6336884f89cf072631f7c14a9e107cd457b44dc185dcfc6f",
       "verifiedAt": "2026-11-26T08:51:54.880Z",
       "discoveredAt": "2026-11-26T02:34:45.125Z"
-    },
-    {
-      "id": "tvu-eae4066d934f4bae",
-      "sourceId": "TVU",
-      "sourceName": "Đại học Trà Vinh",
-      "sourceKind": "school",
-      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
-      "admissionYear": 2026,
-      "date": "2026-06-03",
-      "title": "Tuyển sinh Cao đẳng Giáo dục mầm non, tuyển sinh đại học hình thức thường xuyên, đào tạo kết hợp (người dự tuyển có bằng tốt nghiệp trung học phổ thông)",
-      "summary": "<span data-mce-type=\"bookmark\" style=\"display: inline-block; width: 0px; overflow: hidden; line-height: 0;\" class=\"mce_SELRES_start\"> </span>",
-      "summaryKind": "source-excerpt",
-      "url": "https://tuyensinh.tvu.edu.vn/tuyen-sinh-cao-dang-giao-duc-mam-non-tuyen-sinh-dai-hoc-hinh-thuc-thuong-xuyen-dao-tao-ket-hop-nguoi-du-tuyen-co-bang-tot-nghiep-trung-hoc-pho-thong/",
-      "category": "overview",
-      "draft": false,
-      "contentHash": "a92e9ab2ddd92aaf88555c7dfc4ed8c523cc4a3f3dc8898d4f226cbd80998b49",
-      "verifiedAt": "2026-11-26T08:51:54.880Z",
-      "discoveredAt": "2026-11-26T08:51:54.880Z"
     },
     {
       "id": "utc2-8a1c1b09bde13c7c",

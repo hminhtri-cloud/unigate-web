@@ -29,7 +29,7 @@ export function parseDate(input,now=new Date()){
   if(Number.isNaN(+date)||date.toLocaleDateString('en-CA',{timeZone:'Asia/Ho_Chi_Minh'})!==value||date>now)return null;
   return value;
 }
-export const relevantTitle=title=>/tuyen sinh|xet tuyen|nguyen vong|diem chuan|trung tuyen|nhap hoc|hoc bong|tot nghiep thpt|danh gia nang luc|danh gia tu duy/.test(fold(title))&&!/sau dai hoc|thac si|tien si|chuyen khoa cap|lien thong|van bang (thu )?(hai|2)|tuyen dung|dao tao tu xa|vua lam vua hoc|dai hoc thuong xuyen|trung cap|cao dang 9\+|chuyen tien hoc bong|khuyen khich hk|thu khoa/.test(fold(title));
+export const relevantTitle=title=>/tuyen sinh|xet tuyen|nguyen vong|diem chuan|trung tuyen|nhap hoc|hoc bong|tot nghiep thpt|danh gia nang luc|danh gia tu duy/.test(fold(title))&&!/sau dai hoc|cao hoc|thac si|tien si|chuyen khoa cap|lien thong|van bang (thu )?(hai|2)|tuyen dung|dao tao tu xa|vua lam vua hoc|dai hoc thuong xuyen|hinh thuc (dao tao )?thuong xuyen|trung cap|cao dang 9\+|chuyen tien hoc bong|khuyen khich hk|thu khoa/.test(fold(title));
 const archivePage=(url,title,excerpt='')=>/cac-nam|qua-cac-nam/.test(new URL(url).pathname)||(!/\b20\d{2}\b/.test(title)&&/qua cac nam|cac nam tuyen sinh/.test(fold(excerpt)));
 export function targetCycle(title,body,year){
   // A heading explicitly about another cycle wins over historical body mentions.

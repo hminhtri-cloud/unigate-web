@@ -83,7 +83,11 @@ async function collect(source){
   for(const entry of source.entries){
     if(Date.now()-started>90000)break;
     try{
-      const pages=source.render?await renderedPages(entry,source,source.id==='MOET'):[await readPage(entry,source)];
+      let pages;
+      if(source.render){
+        try{pages=await renderedPages(entry,source,source.id==='MOET');}
+        catch(error){result.errors.push({url:entry,error:error.message,fallback:'Retry as plain HTML'});pages=[await httpHtml(entry,source)];}
+      }else pages=[await readPage(entry,source)];
       for(const page of pages){
         result.pagesRead++;
         // A configured entry can itself be an official announcement.

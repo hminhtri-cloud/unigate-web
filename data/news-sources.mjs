@@ -24,7 +24,7 @@ const adapters={
   CTU:{bodySelectors:['.item-page [itemprop="articleBody"]','.item-page'],dateSelectors:['.published time','.published']},
 };
 export const newsSources=[
-  {id:'MOET',name:'Bộ GD&ĐT',kind:'ministry',hosts:['moet.gov.vn'],entries:[`${ministry}/chuyen-de-giao-duc-va-dao-tao/giao-duc-dai-hoc`],render:true},
+  {id:'MOET',name:'Bộ GD&ĐT',kind:'ministry',hosts:['moet.gov.vn'],entries:[`${ministry}/chuyen-de-giao-duc-va-dao-tao/giao-duc-dai-hoc`,`${ministry}/tin-tuc/tin-tong-hop2`],render:true},
   ...universities.map(university=>{
     const profile=schoolProfiles[university.id];
     const official=[university.website,university.source?.kind==='official'&&university.source.url,profile?.source,...(overrides[university.id]||[])].filter(Boolean);
