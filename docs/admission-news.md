@@ -16,6 +16,25 @@ credentials. The collector still validates the original source URL, title, date
 and content, and keeps direct HTTP/browser fallback if the relay fails. All other
 sources are read directly. Local collection defaults to direct access.
 
+### Verified status — 26 November 2026
+
+The workflow is active in `hminhtri-cloud/unigate-web`. Real GitHub runs have
+collected school articles, committed with `github-actions[bot]`, and confirmed
+successful Vercel deployment. A full 100-source run read listing pages for 93
+sources (not 93 fully verified feeds); per-source failures remain in its artifact.
+
+**Open issue:** automatic Ministry collection from cloud is not yet working.
+Direct GitHub access returned `ETIMEDOUT`, and the separate Singapore relay
+returned `ECONNRESET`. Browser, HTML retry and IPv4 preference were tried. Local
+Ministry collection succeeds. Existing Ministry records stay published, but this
+must not be described as successful daily Ministry ingestion. Completing this
+source needs an execution network that can actually reach `moet.gov.vn`; never
+disable certificate verification or label cached third-party text as verified
+official content to hide the failure. The remaining sources can continue running.
+
+Successful full run: https://github.com/hminhtri-cloud/unigate-web/actions/runs/45788392840
+Successful bot publication: https://github.com/hminhtri-cloud/unigate-web/actions/runs/45787979757
+
 ## Run locally
 
 ```sh
@@ -26,7 +45,7 @@ npm run news:check
 npm run news:collect -- --sources MOET,UIT,TDTU,UTC2 --lookback-days 400
 # Write validated data locally:
 npm run news:update -- --sources MOET,UIT,TDTU,UTC2 --lookback-days 400
-node --test tests/news.test.mjs
+node --test tests/news*.test.mjs
 npm run build
 ```
 
