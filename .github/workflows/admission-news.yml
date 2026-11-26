@@ -1,0 +1,108 @@
+name: Update admission news
+
+on:
+  schedule:
+    # 00:17 UTC = 07:17 Vietnam. GitHub scheduling is best effort.
+    - cron: '17 0 * * *'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish validated news (false = report only)
+        type: boolean
+        default: false
+      sources:
+        description: Comma-separated IDs; empty = all configured sources
+        type: string
+        default: ''
+      lookback_days:
+        description: Lookback window (1–730 days)
+        type: string
+        default: '60'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admission-news-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      statuses: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Test extraction and deduplication
+        run: node --test tests/news.test.mjs
+      - name: Collect official sources
+        env:
+          SOURCE_IDS: ${{ inputs.sources }}
+          LOOKBACK: ${{ inputs.lookback_days || '60' }}
+        # Write in the runner so validation/build exercise the proposed data.
+        # Dry-run dispatches never enter the publication step below.
+        run: npm run news:update -- --sources "$SOURCE_IDS" --lookback-days "$LOOKBACK"
+      - name: Validate and build proposed news
+        run: npm run news:check && npm run build
+      - name: Publish changed news
+        id: publish
+        if: github.repository == 'hminhtri-cloud/unigate-web' && (github.event_name == 'schedule' || inputs.publish == true)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- data/admission-news.json; then
+            echo "No news changes; no commit or deployment needed."
+            exit 0
+          fi
+          git add -- data/admission-news.json
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'cập nhật tin tuyển sinh tự động'
+          # Do not overwrite a concurrent human push. A later run will retry.
+          git push origin "HEAD:${{ github.event.repository.default_branch }}"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Request deployment hook when configured
+        if: steps.publish.outputs.sha != ''
+        env:
+          DEPLOY_HOOK: ${{ secrets.NEWS_VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$DEPLOY_HOOK" ]; then
+            curl --fail --silent --show-error --output /dev/null --request POST "$DEPLOY_HOOK"
+          fi
+      - name: Check Vercel deployment status
+        if: steps.publish.outputs.sha != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEWS_SHA: ${{ steps.publish.outputs.sha }}
+        run: |
+          for attempt in $(seq 1 30); do
+            state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$NEWS_SHA/status" --jq '[.statuses[] | select(.context == "Vercel")][0].state // "pending"')
+            if [ "$state" = success ]; then
+              echo "Vercel deployed $NEWS_SHA" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if [ "$state" = failure ] || [ "$state" = error ]; then
+              echo '::error::Vercel rejected or failed the news deployment. Check commit status.'
+              exit 1
+            fi
+            sleep 15
+          done
+          echo '::error::News committed, but Vercel deployment was not confirmed within 7.5 minutes.'
+          exit 1
+      - name: Save collection report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admission-news-${{ github.run_id }}
+          path: |
+            artifacts/news/
+            data/admission-news.json
+          retention-days: 30

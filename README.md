@@ -38,6 +38,7 @@ Lệnh seed tạo bảng nếu cần và cập nhật danh mục, không xóa ng
 ## Chức năng
 
 - Đăng ký, đăng nhập, đổi mật khẩu, cập nhật hồ sơ; dữ liệu từng tài khoản tách biệt.
+- **Tin tuyển sinh** (`#/news`): nguồn Bộ GD&ĐT và các trường, lọc theo nguồn/trường/chủ đề, ngày đăng, trích đoạn và link bài gốc. Bộ thu thập không dùng API AI, chạy bằng GitHub Actions. Xem [hướng dẫn vận hành và kiểm tra xuất bản](docs/admission-news.md).
 - Trắc nghiệm 60 câu Holland/RIASEC, tự lưu bản nháp, lưu lịch sử kết quả, biểu đồ, in và xuất JSON.
 - Tra cứu **99 trường/cơ sở** (75 trường/cơ sở đại học, học viện và 24 trường/cơ sở cao đẳng tại TP.HCM) cùng **1.262 ngành/chương trình chọn lọc**; tìm không dấu, lọc ngành, trường, bậc đào tạo, học phí, tổ hợp đã đối chiếu, nguồn; gợi ý ngành theo sở thích (tham khảo).
 
