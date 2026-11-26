@@ -4,6 +4,16 @@
 `data/admission-news.json`; `data/admission-news.mjs` adapts it for React.
 No AI API key or database credential is required.
 
+The Ministry website timed out from GitHub-hosted runners during live tests.
+The workflow therefore sets `NEWS_MOET_RELAY=true` to read those public pages
+through UniGate's existing Vercel `/api/news-source` endpoint. The endpoint only
+allows the two Ministry listing paths and their official article URLs, verifies
+redirects/TLS, limits response size/time, returns JSON (never executable HTML),
+and caches successful responses for 30 minutes. It never touches MySQL or forwards
+credentials. The collector still validates the original source URL, title, date
+and content, and keeps direct HTTP/browser fallback if the relay fails. All other
+sources are read directly. Local collection defaults to direct access.
+
 ## Run locally
 
 ```sh

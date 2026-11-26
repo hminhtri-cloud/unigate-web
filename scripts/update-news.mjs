@@ -23,6 +23,16 @@ const report={startedAt:now.toISOString(),admissionYear:document.admissionYear,m
 const errorText=error=>[error.message,error.cause?.code,error.cause?.message,error.cause?.address].filter(Boolean).join(' · ');
 let browserPromise;
 const maxBytes=3*1024*1024;
+const relayEnabled=source=>source.id==='MOET'&&process.env.NEWS_MOET_RELAY==='true';
+async function relayHtml(input,source){
+  const endpoint=new URL('https://unigate-web.vercel.app/api/news-source');endpoint.searchParams.set('url',canonicalUrl(input));
+  const response=await fetch(endpoint,{signal:AbortSignal.timeout(20000)});
+  if(!response.ok)throw new Error(`Project relay HTTP ${response.status}`);
+  const text=await response.text();if(Buffer.byteLength(text)>maxBytes)throw new Error('Relay response too large');
+  const data=JSON.parse(text);
+  if(!allowedUrl(data.sourceUrl,source)||typeof data.html!=='string'||!data.retrievedAt||Number.isNaN(Date.parse(data.retrievedAt))||Date.now()-Date.parse(data.retrievedAt)>24*3600000)throw new Error('Unverified relay response');
+  return {url:data.sourceUrl,html:data.html};
+}
 async function httpHtml(input,source){
   let url=canonicalUrl(input);
   for(let redirects=0;redirects<6;redirects++){
@@ -78,6 +88,9 @@ async function renderedPages(url,source,paginate=false){
   }finally{await page.close();}
 }
 async function readPage(url,source){
+  if(relayEnabled(source)){
+    try{return await relayHtml(url,source);}catch(error){report.events.push({sourceId:source.id,url,reason:'project-relay-failed',error:errorText(error)});}
+  }
   try{return await httpHtml(url,source);}catch(error){
     // Chromium uses its normal certificate checks; never disable TLS verification.
     if(!/fetch failed|Timeout|aborted/i.test(error.message))throw error;
@@ -85,13 +98,13 @@ async function readPage(url,source){
   }
 }
 async function collect(source){
-  const result={id:source.id,name:source.name,status:'failed',pagesRead:0,candidates:0,verified:0,skipped:{},errors:[]},incoming=[],links=new Set(source.seeds||[]),started=Date.now();
+  const result={id:source.id,name:source.name,transport:relayEnabled(source)?'project-relay-with-direct-fallback':'direct',status:'failed',pagesRead:0,candidates:0,verified:0,skipped:{},errors:[]},incoming=[],links=new Set(source.seeds||[]),started=Date.now();
   function event(url,reason){result.skipped[reason]=(result.skipped[reason]||0)+1;report.events.push({sourceId:source.id,url,reason});}
   for(const entry of source.entries){
     if(Date.now()-started>90000)break;
     try{
       let pages;
-      if(source.render){
+      if(source.render&&!relayEnabled(source)){
         try{pages=await renderedPages(entry,source,source.id==='MOET');}
         catch(error){result.errors.push({url:entry,error:errorText(error),fallback:'Retry as plain HTML'});pages=[await httpHtml(entry,source)];}
       }else pages=[await readPage(entry,source)];

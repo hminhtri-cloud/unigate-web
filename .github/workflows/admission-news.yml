@@ -44,11 +44,12 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Test extraction and deduplication
-        run: node --test tests/news.test.mjs
+        run: node --test tests/news*.test.mjs
       - name: Collect official sources
         env:
           SOURCE_IDS: ${{ inputs.sources }}
           LOOKBACK: ${{ inputs.lookback_days || '60' }}
+          NEWS_MOET_RELAY: 'true'
         # Write in the runner so validation/build exercise the proposed data.
         # Dry-run dispatches never enter the publication step below.
         run: npm run news:update -- --sources "$SOURCE_IDS" --lookback-days "$LOOKBACK"
