@@ -24,7 +24,7 @@ export function createNewsSourceHandler(fetchPage=fetch){
         for await(const chunk of response.body){size+=chunk.length;if(size>2*1024*1024)throw new Error('Source too large');chunks.push(chunk);}
         const html=new TextDecoder().decode(Buffer.concat(chunks));
         res.setHeader('Cache-Control','public, s-maxage=1800, stale-while-revalidate=300');
-        return send(200,{sourceUrl:url,retrievedAt:new Date().toISOString(),html});
+        return send(200,{sourceUrl:url,retrievedAt:new Date().toISOString(),region:process.env.VERCEL_REGION||'local',html});
       }
       throw new Error('Too many redirects');
     }catch{return send(502,{error:'official_source_unavailable'});}

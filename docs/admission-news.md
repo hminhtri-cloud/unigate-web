@@ -6,7 +6,9 @@ No AI API key or database credential is required.
 
 The Ministry website timed out from GitHub-hosted runners during live tests.
 The workflow therefore sets `NEWS_MOET_RELAY=true` to read those public pages
-through UniGate's existing Vercel `/api/news-source` endpoint. The endpoint only
+through UniGate's Vercel `/api/news-source` endpoint. The dedicated function is
+configured in Singapore (`sin1`) close to the source; the application's other
+functions keep their existing region. The endpoint only
 allows the two Ministry listing paths and their official article URLs, verifies
 redirects/TLS, limits response size/time, returns JSON (never executable HTML),
 and caches successful responses for 30 minutes. It never touches MySQL or forwards
