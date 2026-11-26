@@ -82,7 +82,7 @@ test('JSON-LD graph and draft status are supported',()=>{
 });
 
 test('student news excludes postgraduate, second-degree, distance courses and archives',()=>{
-  for(const title of ['Thông tin tuyển sinh văn bằng thứ hai năm 2026','Thông báo tuyển sinh chuyên khoa cấp I năm 2026','Thông báo tuyển sinh đại học thường xuyên năm 2026','Tuyển sinh đào tạo từ xa năm 2026','Thông báo chuyển tiền học bổng năm 2026'])assert.equal(relevantTitle(title),false);
+  for(const title of ['Thông tin tuyển sinh văn bằng thứ hai năm 2026','Thông báo tuyển sinh chuyên khoa cấp I năm 2026','Thông báo tuyển sinh đại học thường xuyên năm 2026','Tuyển sinh đào tạo từ xa năm 2026','Thông báo chuyển tiền học bổng năm 2026','Thông báo về việc tuyển sinh Trung cấp năm 2026','Thông báo Tuyển sinh hệ Cao đẳng 9+ năm 2026'])assert.equal(relevantTitle(title),false);
   const a={...extract().article,title:'Thông báo tuyển sinh chuyên khoa cấp I năm 2026'};
   assert.equal(mergeArticles([a],[]).stats.removed,1);
   assert.equal(extract(html(),'https://school.edu.vn/thong-tin-tuyen-sinh-cac-nam/').reason,'archive-not-news');
@@ -90,6 +90,7 @@ test('student news excludes postgraduate, second-degree, distance courses and ar
 
 test('invalid template descriptions and bare links are not excerpts',()=>{
   assert.equal(extract(html('<meta property="og:description" content="%">')).article.summary,body);
+  assert.equal(extract(html('<meta property="og:description" content="Thông báo tuyển sinh năm 2025 body font-family: Times New Roman; font-size: 16px; line-height: 1.6">')).article.summary,body);
   const original=extract().article;
   const fixed=mergeArticles([{...original,summary:'%'}],[original]);
   assert.equal(fixed.stats.updated,1);assert.equal(fixed.articles[0].summary,body);

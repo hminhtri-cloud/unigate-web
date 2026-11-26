@@ -29,7 +29,7 @@ export function parseDate(input,now=new Date()){
   if(Number.isNaN(+date)||date.toLocaleDateString('en-CA',{timeZone:'Asia/Ho_Chi_Minh'})!==value||date>now)return null;
   return value;
 }
-export const relevantTitle=title=>/tuyen sinh|xet tuyen|nguyen vong|diem chuan|trung tuyen|nhap hoc|hoc bong|tot nghiep thpt|danh gia nang luc|danh gia tu duy/.test(fold(title))&&!/sau dai hoc|thac si|tien si|chuyen khoa cap|lien thong|van bang (thu )?(hai|2)|tuyen dung|dao tao tu xa|vua lam vua hoc|dai hoc thuong xuyen|bac trung cap|trinh do trung cap|chuyen tien hoc bong|khuyen khich hk|thu khoa/.test(fold(title));
+export const relevantTitle=title=>/tuyen sinh|xet tuyen|nguyen vong|diem chuan|trung tuyen|nhap hoc|hoc bong|tot nghiep thpt|danh gia nang luc|danh gia tu duy/.test(fold(title))&&!/sau dai hoc|thac si|tien si|chuyen khoa cap|lien thong|van bang (thu )?(hai|2)|tuyen dung|dao tao tu xa|vua lam vua hoc|dai hoc thuong xuyen|trung cap|cao dang 9\+|chuyen tien hoc bong|khuyen khich hk|thu khoa/.test(fold(title));
 const archivePage=(url,title,excerpt='')=>/cac-nam|qua-cac-nam/.test(new URL(url).pathname)||(!/\b20\d{2}\b/.test(title)&&/qua cac nam|cac nam tuyen sinh/.test(fold(excerpt)));
 export function targetCycle(title,body,year){
   // A heading explicitly about another cycle wins over historical body mentions.
@@ -71,7 +71,7 @@ export function extractArticle(html,url,source,{year=2026,now=new Date(),notBefo
   const declared=$('link[rel="canonical"]').attr('href');
   if(declared){try{const candidate=canonicalUrl(declared,url);if(!allowedUrl(candidate,source))return {reason:'untrusted-canonical'};if(new URL(candidate).pathname==='/'&&!new URL(candidate).hash.startsWith('#/'))return {reason:'canonical-not-article'};canonical=candidate;}catch{return {reason:'invalid-canonical'};}}
   // Extract, never generate: no article text can become executable code/HTML.
-  const useful=text=>{const value=clean(text);return value.length>=60&&fold(value)!==fold(title)&&!/^https?:\/\//i.test(value)&&! / - Detail - /.test(value)?value:'';};
+  const useful=text=>{const value=clean(text),cycle=fold(value).match(/tuyen sinh.{0,70}?(?:nam|nien khoa)\s*(20\d{2})/);return value.length>=60&&fold(value)!==fold(title)&&!/^https?:\/\//i.test(value)&&! / - Detail - |font-family\s*:|font-size\s*:|line-height\s*:|<style|body\s*\{/i.test(value)&&(!cycle||Number(cycle[1])===year)?value:'';};
   const excerpt=useful($('.article-brief,.entry-summary,.sapo,.article-sapo').first().text())||useful(metaExcerpt)||useful(content.find('p').filter((_,el)=>clean($(el).text()).length>80).first().text());
   const summary=excerpt.length>500?`${excerpt.slice(0,497).replace(/\s+\S*$/,'')}…`:excerpt;
   const assets=content.find('img[src],iframe[src]').map((_,el)=>{try{return canonicalUrl($(el).attr('src'),url);}catch{return '';}}).get().filter(Boolean).sort();
