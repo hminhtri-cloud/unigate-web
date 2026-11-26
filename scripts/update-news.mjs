@@ -2,10 +2,13 @@ import {readFile,writeFile,mkdir,rename,appendFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {parseArgs} from 'node:util';
+import {setDefaultResultOrder} from 'node:dns';
 import {newsSources} from '../data/news-sources.mjs';
 import {allowedUrl,canonicalUrl,discoverLinks,extractArticle,mergeArticles,validateNews} from './news-core.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
+// Hosted runners may resolve AAAA records without a working IPv6 egress route.
+setDefaultResultOrder('ipv4first');
 const {values}=parseArgs({options:{write:{type:'boolean',default:false},validate:{type:'boolean',default:false},sources:{type:'string'},'lookback-days':{type:'string',default:'60'},'max-per-source':{type:'string',default:'12'},'report-dir':{type:'string',default:'artifacts/news'}}});
 const dataPath=resolve(root,'data/admission-news.json'),document=JSON.parse(await readFile(dataPath,'utf8'));
 validateNews(document,newsSources);
@@ -17,7 +20,7 @@ const requested=values.sources?.trim()?values.sources.split(',').map(id=>id.trim
 if(requested?.some(id=>!newsSources.some(s=>s.id===id)))throw new Error('Unknown source ID');
 const sources=newsSources.filter(s=>!requested||requested.includes(s.id));
 const report={startedAt:now.toISOString(),admissionYear:document.admissionYear,mode:values.write?'write':'dry-run',lookbackDays:lookback,limitPerSource:limit,sources:[],events:[]};
-const errorText=error=>[error.message,error.cause?.code,error.cause?.message].filter(Boolean).join(' · ');
+const errorText=error=>[error.message,error.cause?.code,error.cause?.message,error.cause?.address].filter(Boolean).join(' · ');
 let browserPromise;
 const maxBytes=3*1024*1024;
 async function httpHtml(input,source){
