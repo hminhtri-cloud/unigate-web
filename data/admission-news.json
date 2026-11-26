@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "admissionYear": 2026,
-  "updatedAt": "2026-11-26T08:51:54.880Z",
+  "updatedAt": "2026-11-26T09:00:47.610Z",
   "articles": [
     {
       "id": "hce-5b70d2019e26edfd",
@@ -495,6 +495,24 @@
       "discoveredAt": "2026-11-26T08:51:54.880Z"
     },
     {
+      "id": "cvn-5d174ab82754d984",
+      "sourceId": "CVN",
+      "sourceName": "Trường Cao đẳng Văn hóa Nghệ thuật TP. Hồ Chí Minh",
+      "sourceKind": "school",
+      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
+      "admissionYear": 2026,
+      "date": "2026-08-06",
+      "title": "Thông báo tuyển sinh Cao đẳng chính quy năm 2026 (đợt bổ sung)",
+      "summary": "Thông báo tuyển sinh Cao đẳng chính quy năm 2026 (đợt bổ sung) – Ngành Đạo diễn sân khấu",
+      "summaryKind": "source-excerpt",
+      "url": "https://vhnthcm.edu.vn/thong-bao-tuyen-sinh-cao-dang-chinh-quy-nam-2026-dot-bo-sung/",
+      "category": "guidance",
+      "draft": false,
+      "contentHash": "528ff0b851f2dfb898dfbb55c8ebbfb943dfe07d3f79b60d91262ae5deb5b771",
+      "verifiedAt": "2026-11-26T09:00:47.610Z",
+      "discoveredAt": "2026-11-26T09:00:47.610Z"
+    },
+    {
       "id": "moet-f19bef9c4f6484c6",
       "sourceId": "MOET",
       "sourceName": "Bộ GD&ĐT",
@@ -901,24 +919,6 @@
       "url": "https://moet.gov.vn/tin-tuc/tin-tong-hop2/huong-dan-tuyen-sinh-trinh-do-dai-hoc-trinh-do-cao-dang-nganh-giao-duc-mam-non-nam-2026.html"
     },
     {
-      "id": "tvu-ebb5ed1a2373b155",
-      "sourceId": "TVU",
-      "sourceName": "Đại học Trà Vinh",
-      "sourceKind": "school",
-      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
-      "admissionYear": 2026,
-      "date": "2026-05-04",
-      "title": "Thông báo tuyển sinh đại học hình thức thường xuyên, đào tạo kết hợp (người có bằng tốt nghiệp từ trung cấp trở lên cùng nhóm ngành dự tuyển)",
-      "summary": "",
-      "summaryKind": "source-excerpt",
-      "url": "https://tuyensinh.tvu.edu.vn/thong-bao-tuyen-sinh-dai-hoc-hinh-thuc-thuong-xuyen-dao-tao-ket-hop-nguoi-co-bang-tot-nghiep-tu-trung-cap-tro-len-cung-nhom-nganh-du-tuyen/",
-      "category": "guidance",
-      "draft": false,
-      "contentHash": "2c87b202f9eb6567eadfe164f119e039b2d90668cda4612206c33a170d0dee93",
-      "verifiedAt": "2026-11-26T08:51:54.880Z",
-      "discoveredAt": "2026-11-26T08:51:54.880Z"
-    },
-    {
       "id": "moet-5d2c419a03e46c7f",
       "sourceId": "MOET",
       "sourceName": "Bộ GD&ĐT",
@@ -1006,6 +1006,24 @@
       "contentHash": "38997282c692f413d6d633ba6f0272cd543e74b5f7c704381c5c1b8d88d9fd80",
       "verifiedAt": "2026-11-26T08:51:54.880Z",
       "discoveredAt": "2026-11-26T08:45:14.493Z"
+    },
+    {
+      "id": "nsg-c63e9c1b2d4a6649",
+      "sourceId": "NSG",
+      "sourceName": "Trường Cao đẳng Bách khoa Nam Sài Gòn",
+      "sourceKind": "school",
+      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
+      "admissionYear": 2026,
+      "date": "2026-03-06",
+      "title": "Thông báo về việc tuyển sinh Cao đẳng chính quy năm 2026",
+      "summary": "Thời gian đào tạo: 2,5 năm (hoặc 03 năm đối với các ngành thuộc khối Y Dược). Hình thức đào tạo: Theo hình thức tích lũy tín chỉ (theo thông tư 04/2022/TT-BLĐTBXH ngày 30 tháng 3 năm 2022). Đối tượng xét tuyển: Học sinh tốt nghiệp chương trình văn hóa THPT. Học sinh tốt nghiệp Trung cấp [...]",
+      "summaryKind": "source-excerpt",
+      "url": "https://tuyensinh.namsaigon.edu.vn/thong-bao-ve-viec-tuyen-sinh-cao-dang-chinh-quy-nam-2026/",
+      "category": "guidance",
+      "draft": false,
+      "contentHash": "66ba87d5d6fb16b405ffa9a1a4be1e4a5b3ae8ad0ff91643243a12738b7ca5d7",
+      "verifiedAt": "2026-11-26T09:00:47.610Z",
+      "discoveredAt": "2026-11-26T09:00:47.610Z"
     },
     {
       "id": "admissions-regulations-2026",
@@ -1107,6 +1125,24 @@
       "discoveredAt": "2026-11-26T07:01:13.018Z"
     },
     {
+      "id": "nsg-6f308feefe949630",
+      "sourceId": "NSG",
+      "sourceName": "Trường Cao đẳng Bách khoa Nam Sài Gòn",
+      "sourceKind": "school",
+      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
+      "admissionYear": 2026,
+      "date": "2026-01-06",
+      "title": "Ngày hội tư vấn tuyển sinh tại Trường THPT Quang Trung năm 2026 (Củ Chi)",
+      "summary": "",
+      "summaryKind": "source-excerpt",
+      "url": "https://tuyensinh.namsaigon.edu.vn/ngay-hoi-tu-van-tuyen-sinh-tai-truong-thpt-quang-trung-nam-2026-cu-chi/",
+      "category": "overview",
+      "draft": false,
+      "contentHash": "778a788ee9483cb729adf67406ea775d8185e1eb6ec836e567a54111c9b96a22",
+      "verifiedAt": "2026-11-26T09:00:47.610Z",
+      "discoveredAt": "2026-11-26T09:00:47.610Z"
+    },
+    {
       "id": "hce-85f1449593188ad2",
       "sourceId": "HCE",
       "sourceName": "Trường Cao đẳng Kinh tế TP. Hồ Chí Minh",
@@ -1123,6 +1159,24 @@
       "contentHash": "180bff809274a5881e87989e1597a6932d9f97a473c0dfde6cc0649d151f0fc3",
       "verifiedAt": "2026-11-26T08:51:54.880Z",
       "discoveredAt": "2026-11-26T08:45:14.493Z"
+    },
+    {
+      "id": "itc-48b7803cdc6daae9",
+      "sourceId": "ITC",
+      "sourceName": "Trường Cao đẳng Công nghệ Thông tin TP. Hồ Chí Minh",
+      "sourceKind": "school",
+      "sourceScope": "Tin từ website trường; xem bài gốc để xác nhận chương trình và cơ sở áp dụng.",
+      "admissionYear": 2026,
+      "date": "2025-12-08",
+      "title": "Thông báo Tuyển sinh hệ Cao đẳng chính quy năm 2026",
+      "summary": "Căn cứ Kế hoạch Tuyển sinh năm 2026, Trường Cao đẳng Công nghệ thông tin Thành phố Hồ Chí Minh thông báo tuyển sinh Cao đẳng chính quy năm 2026, cụ thể như sau:",
+      "summaryKind": "source-excerpt",
+      "url": "https://itc.edu.vn/gioi-thieu/khoa-trung-tam-phong-ban-chuc-nang/phong-ban-chuc-nang/phong-tuyen-sinh-va-truyen-thong/thong-bao-3/thong-bao-tuyen-sinh-he-cao-dang-chinh-quy-nam-2026",
+      "category": "guidance",
+      "draft": false,
+      "contentHash": "8bad7d29e0ba893e2c9a01f964a92fe2c858d062eb5cdf5b9d8ba4f8b393adaa",
+      "verifiedAt": "2026-11-26T09:00:47.610Z",
+      "discoveredAt": "2026-11-26T09:00:47.610Z"
     }
   ]
 }
